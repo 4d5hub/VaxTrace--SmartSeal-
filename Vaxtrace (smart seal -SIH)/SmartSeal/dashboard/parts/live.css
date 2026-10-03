@@ -1,0 +1,30 @@
+.modebar{position:sticky;top:0;z-index:30;background:var(--ink);color:#fff;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:7px 18px;padding-top:calc(7px + env(safe-area-inset-top,0px))}
+.modebar b{font:600 15px Georgia,"Times New Roman",serif;margin-right:6px}
+.modebar button{background:transparent;color:#fff;border:1px solid #8fa3b8;padding:3px 12px}
+.modebar button:hover{background:#27425e;color:#fff}.modebar button.on{background:#fff;color:var(--ink);font-weight:600}
+.modebar input{background:#0e1d2d;color:#fff;border:0;border-bottom:1px solid #8fa3b8;width:170px;padding:2px 4px}
+.modebar select{background:#0e1d2d;color:#fff;border:1px solid #8fa3b8;max-width:160px}
+.modebar label{font-size:12px;color:#c6d3e0}
+.conn{font-weight:700;letter-spacing:.05em;padding:2px 9px;border:2px solid;font-size:12.5px}
+.conn.up{color:#7dffb0;border-color:#7dffb0}.conn.down{color:#ff9a8f;border-color:#ff9a8f}.conn.unk{color:#ffd27d;border-color:#ffd27d}
+#liveRoot .tabs{display:flex;flex-wrap:wrap;border-bottom:3px solid var(--ink);margin:12px 0 16px}
+#liveRoot .tabs button{border:0;background:transparent;padding:8px 14px;font-weight:600;color:var(--mute);text-transform:uppercase;font-size:12px;letter-spacing:.04em}
+#liveRoot .tabs button:hover{background:#dbe5ec;color:var(--ink)}#liveRoot .tabs button.on{background:var(--ink);color:#fff}
+#lvBody .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:8px 30px}
+#lvBody h4{font:600 15px Georgia,"Times New Roman",serif;margin:18px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--rule)}
+#lvBody h4:first-child{margin-top:0}
+#lvBody .scrollx{overflow-x:auto}
+#lvBody table td,#lvBody table th{font-size:12.5px;white-space:nowrap}
+#lvBody .wrapcell{white-space:normal}
+.st{display:inline-block;min-width:46px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.st.PASS,.st.PASSED,.st.ANCHORED,.st.yes{color:var(--ok)}.st.WARN,.st.PENDING,.st.SKIP,.st.SKIPPED,.st.PARTIALLY_MITIGATED{color:var(--warn)}.st.FAIL,.st.REJECTED,.st.no,.st.NOT_SOLVED{color:var(--bad)}
+.st.DETECTED,.st.PREVENTED,.st.BASELINE{color:var(--cold)}
+.err{border:2px solid var(--bad);color:var(--bad);padding:8px 12px;margin:8px 0;max-width:90ch}
+.info{border-left:4px solid var(--cold);background:var(--sheet);padding:8px 12px;margin:8px 0;max-width:92ch}
+.lvmsg{margin-top:8px;min-height:1.4em}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:3px 16px;margin:4px 0 10px}.kv span:nth-child(odd){color:var(--mute)}
+.route{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 10px}
+.party{border:2px solid var(--rule);padding:6px 12px}.party.done{border-color:var(--ok);color:var(--ok)}.party.holder{border-color:var(--ink);background:var(--ink);color:#fff}
+.tree{overflow-x:auto;padding-bottom:6px}.tree .row{justify-content:center;flex-wrap:nowrap}
+.n.root{background:var(--ink);color:#fff}
+#liveRoot #lvIndia #india{margin-top:0}

@@ -1,0 +1,114 @@
+name: smartseal
+
+networks:
+  chain:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+services:
+  node1:
+    image: ${BESU_IMAGE:-hyperledger/besu:latest}
+    container_name: smartseal-node1
+    restart: unless-stopped
+    command:
+      - --data-path=/opt/besu/data
+      - --genesis-file=/opt/besu/genesis.json
+      - --p2p-host=172.28.0.11
+      - --p2p-port=30303
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-port=8545
+      - --rpc-http-api=ETH,NET,QBFT,WEB3,TXPOOL,ADMIN
+      - --host-allowlist=*
+      - --rpc-http-cors-origins=all
+      - --revert-reason-enabled
+    volumes:
+      - ./nodes/node1:/opt/besu/data
+      - ./genesis/genesis.json:/opt/besu/genesis.json:ro
+    ports:
+      - "127.0.0.1:8545:8545"
+    networks:
+      chain:
+        ipv4_address: 172.28.0.11
+
+  node2:
+    image: ${BESU_IMAGE:-hyperledger/besu:latest}
+    container_name: smartseal-node2
+    restart: unless-stopped
+    depends_on: [node1]
+    command:
+      - --data-path=/opt/besu/data
+      - --genesis-file=/opt/besu/genesis.json
+      - --bootnodes=${BOOTNODE_ENODE}
+      - --p2p-host=172.28.0.12
+      - --p2p-port=30303
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-port=8545
+      - --rpc-http-api=ETH,NET,QBFT,WEB3,TXPOOL,ADMIN
+      - --host-allowlist=*
+      - --rpc-http-cors-origins=all
+      - --revert-reason-enabled
+    volumes:
+      - ./nodes/node2:/opt/besu/data
+      - ./genesis/genesis.json:/opt/besu/genesis.json:ro
+    ports:
+      - "127.0.0.1:8546:8545"
+    networks:
+      chain:
+        ipv4_address: 172.28.0.12
+
+  node3:
+    image: ${BESU_IMAGE:-hyperledger/besu:latest}
+    container_name: smartseal-node3
+    restart: unless-stopped
+    depends_on: [node1]
+    command:
+      - --data-path=/opt/besu/data
+      - --genesis-file=/opt/besu/genesis.json
+      - --bootnodes=${BOOTNODE_ENODE}
+      - --p2p-host=172.28.0.13
+      - --p2p-port=30303
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-port=8545
+      - --rpc-http-api=ETH,NET,QBFT,WEB3,TXPOOL,ADMIN
+      - --host-allowlist=*
+      - --rpc-http-cors-origins=all
+      - --revert-reason-enabled
+    volumes:
+      - ./nodes/node3:/opt/besu/data
+      - ./genesis/genesis.json:/opt/besu/genesis.json:ro
+    ports:
+      - "127.0.0.1:8547:8545"
+    networks:
+      chain:
+        ipv4_address: 172.28.0.13
+
+  node4:
+    image: ${BESU_IMAGE:-hyperledger/besu:latest}
+    container_name: smartseal-node4
+    restart: unless-stopped
+    depends_on: [node1]
+    command:
+      - --data-path=/opt/besu/data
+      - --genesis-file=/opt/besu/genesis.json
+      - --bootnodes=${BOOTNODE_ENODE}
+      - --p2p-host=172.28.0.14
+      - --p2p-port=30303
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-port=8545
+      - --rpc-http-api=ETH,NET,QBFT,WEB3,TXPOOL,ADMIN
+      - --host-allowlist=*
+      - --rpc-http-cors-origins=all
+      - --revert-reason-enabled
+    volumes:
+      - ./nodes/node4:/opt/besu/data
+      - ./genesis/genesis.json:/opt/besu/genesis.json:ro
+    ports:
+      - "127.0.0.1:8548:8545"
+    networks:
+      chain:
+        ipv4_address: 172.28.0.14

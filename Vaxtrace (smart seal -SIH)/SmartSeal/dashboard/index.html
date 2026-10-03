@@ -1,0 +1,839 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VaxTrace – Smart Seal custody (simulation + real backend)</title>
+<style>
+:root{color-scheme:light;--paper:#e9edf0;--sheet:#fafbfb;--ink:#13263a;--mute:#5b6d7e;--rule:#b4c0ca;--ok:#1d6a44;--warn:#a25f00;--bad:#b0271f;--cold:#1e5e89;box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.5 "Segoe UI","Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:1320px;margin:0 auto;padding:16px 22px 40px}
+h1{font:600 28px/1.15 Georgia,"Times New Roman",serif;margin:0 0 6px}
+header{border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:10px}header p{margin:0;max-width:78ch}
+.m{color:var(--mute)}.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0 16px}
+.cols{column-width:390px;column-gap:30px}
+.stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:0 30px;align-items:start}
+.p{break-inside:avoid;margin:0 0 24px;padding-top:8px;border-top:2px solid var(--ink);overflow-x:auto}
+h3{font:600 17px Georgia,"Times New Roman",serif;margin:0 0 8px}
+button,select,input{font:inherit;color:var(--ink)}
+button,select{background:var(--sheet);border:1px solid var(--ink);border-radius:2px;padding:4px 10px;cursor:pointer}
+button:hover{background:var(--ink);color:var(--sheet)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cold);outline-offset:1px}
+input[type=number]{width:62px;background:transparent;border:0;border-bottom:1px solid var(--ink);padding:2px 3px}
+input[type=range]{width:170px;accent-color:var(--cold);vertical-align:middle}
+code{font:11.5px ui-monospace,Consolas,monospace;color:var(--cold);cursor:pointer;border-bottom:1px dotted var(--cold)}
+.oled{background:#04070a;color:#d3ecff;font:13px/1.35 ui-monospace,Consolas,monospace;padding:10px 12px;border-radius:3px;white-space:pre;border:7px solid #2a2f37;margin-bottom:10px}
+.led{display:inline-block;width:13px;height:13px;border-radius:50%;background:#9aa6b0;margin-right:7px;border:1px solid #6d7a86;vertical-align:-2px}
+.led.g{background:radial-gradient(circle at 35% 30%,#c9ffd9,#22b358);box-shadow:0 0 7px #22b358}
+.led.a{background:radial-gradient(circle at 35% 30%,#ffe7ad,#e69a00);box-shadow:0 0 7px #e69a00}
+.led.r{background:radial-gradient(circle at 35% 30%,#ffc4bf,#d62a1f);box-shadow:0 0 7px #d62a1f}
+.row{display:flex;gap:5px;margin:3px 0}
+.n{font:11px ui-monospace,Consolas,monospace;background:#dde4ea;padding:1px 5px;border-radius:2px;display:inline-block;margin:1px 0}
+.n.bad{background:#f4d4d0;color:var(--bad)}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.chip{display:inline-block;border-bottom:2px solid var(--rule);padding:1px 6px;margin:3px 2px}.chip.on{border-color:var(--ok);color:var(--ok);font-weight:600}
+.tag{display:inline-block;width:42px;font-size:11px}
+.verdict{display:inline-block;font:700 27px Georgia,serif;letter-spacing:.14em;padding:3px 16px;border:4px double;transform:rotate(-4deg);margin:16px 8px 10px}
+.ACCEPT{color:var(--ok)}.QUARANTINE{color:var(--warn)}.REJECT{color:var(--bad)}
+table{border-collapse:collapse;width:100%}th{font-weight:600;text-align:left;border-bottom:1.5px solid var(--ink)}td,th{padding:3px 5px}td{border-bottom:1px solid var(--rule)}
+.scroll{max-height:230px;overflow:auto}
+.card{border:1px dashed var(--mute);background:var(--sheet);padding:8px 11px;margin-top:10px}
+#atk button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--rule);background:none;padding:6px 2px;color:var(--ink)}
+#atk button:hover{background:#dbe5ec;color:var(--ink)}
+#cap{font-style:italic;color:var(--warn);max-width:60ch}
+ul{padding-left:18px;margin:0}li{margin-bottom:4px}
+
+#india{overflow:visible;margin-bottom:30px}
+#india .lead{font:600 19px/1.35 Georgia,"Times New Roman",serif;max-width:76ch;margin:0 0 4px}
+#india h4{font:600 14px/1.3 "Segoe UI","Helvetica Neue",Arial,sans-serif;margin:24px 0 8px;padding-bottom:3px;border-bottom:1px solid var(--rule)}
+.bd{font-size:11.5px;font-weight:600;padding:1px 7px;margin-left:8px;vertical-align:1px}
+.bd.real{border:1.5px solid var(--ink)}.bd.calc{border:1.5px solid var(--cold);color:var(--cold)}.bd.sim{border:1.5px dashed var(--warn);color:var(--warn)}
+.gh{font-weight:600;margin:12px 0 6px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 18px}
+.stat{border-left:2px solid var(--ink);padding:1px 0 1px 12px;margin-bottom:8px}
+.stat b{display:block;font:600 34px/1.05 Georgia,"Times New Roman",serif}
+.stat span{display:block;font-size:13px}.stat i{display:block;font-style:normal;font-size:11.5px;color:var(--mute)}
+.note{border-left:4px solid var(--cold);background:var(--sheet);padding:9px 13px;margin:12px 0;max-width:92ch}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;margin:8px 0}
+.flow .nd{flex:1 1 130px;background:var(--sheet);border-bottom:3px solid var(--ink);padding:6px 10px}
+.flow .nd small{display:block;color:var(--mute);font-size:11.5px}
+.flow .ar,.gflow .ar{align-self:center;padding:0 6px;color:var(--mute)}
+.gflow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.gflow>div:not(.ar){flex:1 1 180px}
+.gflow b{font:600 24px/1.1 Georgia,"Times New Roman",serif}
+.hyp{display:inline-block;border:2px solid var(--bad);color:var(--bad);font-weight:700;padding:3px 9px;margin:0 0 8px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:8px 26px;align-items:start}
+.scn,.chart{width:100%;height:auto;display:block}
+.scn .ln{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.scn .thin{stroke:var(--rule);stroke-width:1.2}.scn .fl{fill:var(--sheet)}.scn .seal{fill:var(--cold);stroke:none}
+.scn .arw{fill:none;stroke:var(--mute);stroke-width:1.5;stroke-dasharray:5 4}
+.scn .wn{fill:var(--sheet);stroke:var(--bad);stroke-width:2}
+.scn text{font:14.5px "Segoe UI","Helvetica Neue",Arial,sans-serif}
+.chart text{font:12px "Segoe UI","Helvetica Neue",Arial,sans-serif;fill:var(--ink)}
+.scn text.wt{fill:var(--bad);font-weight:700}.scn text.mu{fill:var(--mute);font-size:13px}
+.chart .band{fill:var(--cold);opacity:.13}.chart .grid{stroke:var(--rule);stroke-width:1}
+.chart .real{fill:none;stroke:var(--cold);stroke-width:2.2}.chart .edit{fill:none;stroke:var(--bad);stroke-width:2.2;stroke-dasharray:6 4}
+.chart .pt{fill:var(--sheet);stroke:var(--cold);stroke-width:1.8}.chart .pt.out{stroke:var(--bad)}
+.lg{display:inline-block;width:22px;border-top:3px solid var(--cold);vertical-align:3px;margin:0 5px 0 0}.lg.ed{border-top:3px dashed var(--bad);margin-left:14px}
+.rvs{width:auto;min-width:260px;margin-top:6px}.rvs td,.rvs th{padding:3px 12px 3px 0}.rvs .re{color:var(--cold);font-weight:600}.rvs .ed{color:var(--bad);font-weight:600}
+.pl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 10px}
+.pl>div{position:relative;padding:6px 18px 8px 0;border-bottom:3px solid var(--rule);font-size:12.5px;line-height:1.4}
+.pl>div b{display:block;font:600 14px Georgia,"Times New Roman",serif}
+.pl>div:not(:last-child)::after{content:"→";position:absolute;right:2px;top:6px;color:var(--mute)}
+.pl>div.on{border-bottom-color:var(--cold)}
+.csl{list-style:none;margin:0;padding:0;counter-reset:cs}
+.csl li{counter-increment:cs;position:relative;padding:5px 0 7px 34px;border-bottom:1px solid var(--rule);min-height:34px}
+.csl li::before{content:counter(cs);position:absolute;left:0;top:6px;width:22px;height:22px;line-height:19px;text-align:center;font-size:12px;border:2px solid var(--rule);color:var(--mute);box-sizing:border-box}
+.csl li.act::before{border-color:var(--warn);color:var(--warn);font-weight:700}
+.csl li.done::before{border-color:var(--ok);background:var(--ok);color:#fff}
+.csl li .dyn{display:block;color:var(--mute);font-size:13px}.csl li.act .dyn,.csl li.done .dyn{color:var(--ink)}
+.rl{margin:2px 0}.rl .tag{width:44px}
+.jl{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.jl a{color:var(--cold);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.jl a:focus-visible{outline:2px solid var(--cold);outline-offset:2px}
+.flash{outline:2px solid var(--cold);outline-offset:6px}
+.plus{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:10px 0 4px;font:600 15px Georgia,"Times New Roman",serif}
+.plus span.t{border-bottom:2px solid var(--ink);padding:1px 4px}.plus span.o{color:var(--mute)}
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px 22px}
+.trio>div{padding-top:6px}.trio ul{padding-left:18px}
+.trio .r{border-top:3px solid var(--ink)}.trio .c{border-top:3px solid var(--cold)}.trio .s{border-top:3px dashed var(--warn)}
+.lim{border-left:4px solid var(--warn);background:var(--sheet);padding:9px 13px;max-width:92ch}
+#india details{border:1px solid var(--rule);background:var(--sheet);padding:6px 12px;margin-top:10px;max-width:92ch}
+#india summary{cursor:pointer;font:600 15px Georgia,"Times New Roman",serif}
+#india blockquote{margin:8px 0 4px;padding-left:12px;border-left:3px solid var(--ink);font:italic 15px/1.55 Georgia,"Times New Roman",serif}
+.src{font-size:11.5px;color:var(--mute);margin-top:16px;border-top:1px solid var(--rule);padding-top:8px}
+.src a{color:var(--cold)}.src p{margin:4px 0}
+
+.modebar{position:sticky;top:0;z-index:30;background:var(--ink);color:#fff;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:7px 18px;padding-top:calc(7px + env(safe-area-inset-top,0px))}
+.modebar b{font:600 15px Georgia,"Times New Roman",serif;margin-right:6px}
+.modebar button{background:transparent;color:#fff;border:1px solid #8fa3b8;padding:3px 12px}
+.modebar button:hover{background:#27425e;color:#fff}.modebar button.on{background:#fff;color:var(--ink);font-weight:600}
+.modebar input{background:#0e1d2d;color:#fff;border:0;border-bottom:1px solid #8fa3b8;width:170px;padding:2px 4px}
+.modebar select{background:#0e1d2d;color:#fff;border:1px solid #8fa3b8;max-width:160px}
+.modebar label{font-size:12px;color:#c6d3e0}
+.conn{font-weight:700;letter-spacing:.05em;padding:2px 9px;border:2px solid;font-size:12.5px}
+.conn.up{color:#7dffb0;border-color:#7dffb0}.conn.down{color:#ff9a8f;border-color:#ff9a8f}.conn.unk{color:#ffd27d;border-color:#ffd27d}
+#liveRoot .tabs{display:flex;flex-wrap:wrap;border-bottom:3px solid var(--ink);margin:12px 0 16px}
+#liveRoot .tabs button{border:0;background:transparent;padding:8px 14px;font-weight:600;color:var(--mute);text-transform:uppercase;font-size:12px;letter-spacing:.04em}
+#liveRoot .tabs button:hover{background:#dbe5ec;color:var(--ink)}#liveRoot .tabs button.on{background:var(--ink);color:#fff}
+#lvBody .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:8px 30px}
+#lvBody h4{font:600 15px Georgia,"Times New Roman",serif;margin:18px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--rule)}
+#lvBody h4:first-child{margin-top:0}
+#lvBody .scrollx{overflow-x:auto}
+#lvBody table td,#lvBody table th{font-size:12.5px;white-space:nowrap}
+#lvBody .wrapcell{white-space:normal}
+.st{display:inline-block;min-width:46px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.st.PASS,.st.PASSED,.st.ANCHORED,.st.yes{color:var(--ok)}.st.WARN,.st.PENDING,.st.SKIP,.st.SKIPPED,.st.PARTIALLY_MITIGATED{color:var(--warn)}.st.FAIL,.st.REJECTED,.st.no,.st.NOT_SOLVED{color:var(--bad)}
+.st.DETECTED,.st.PREVENTED,.st.BASELINE{color:var(--cold)}
+.err{border:2px solid var(--bad);color:var(--bad);padding:8px 12px;margin:8px 0;max-width:90ch}
+.info{border-left:4px solid var(--cold);background:var(--sheet);padding:8px 12px;margin:8px 0;max-width:92ch}
+.lvmsg{margin-top:8px;min-height:1.4em}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:3px 16px;margin:4px 0 10px}.kv span:nth-child(odd){color:var(--mute)}
+.route{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 10px}
+.party{border:2px solid var(--rule);padding:6px 12px}.party.done{border-color:var(--ok);color:var(--ok)}.party.holder{border-color:var(--ink);background:var(--ink);color:#fff}
+.tree{overflow-x:auto;padding-bottom:6px}.tree .row{justify-content:center;flex-wrap:nowrap}
+.n.root{background:var(--ink);color:#fff}
+#liveRoot #lvIndia #india{margin-top:0}
+
+#guide{overflow:visible}
+#guide summary{font:600 17px Georgia,"Times New Roman",serif;padding:2px 0}
+.gbody{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px 32px;margin-top:10px}
+.gbody h4{font:600 14px/1.3 "Segoe UI","Helvetica Neue",Arial,sans-serif;margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid var(--rule)}
+.gbody p{margin:0 0 8px;max-width:72ch}
+.grs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 16px;margin-top:6px}
+.grs div{border-top:3px solid var(--ok);padding:5px 0;font-size:12.5px;line-height:1.4}.grs div b{display:block;font-size:13px}
+.grs .gs{border-top:3px dashed var(--warn)}.grs .gb2{border-top:3px solid var(--cold)}
+.gsteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.gstep{border:1px solid var(--rule);background:var(--sheet);padding:8px 10px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;line-height:1.4}
+.gstep i{font-style:normal;font-weight:700;color:var(--mute);font-size:12px}
+.gstep strong{font:600 14px Georgia,"Times New Roman",serif}
+.gstep button{margin-top:auto;align-self:flex-start}
+.gkey{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-top:12px}
+.gkey div{border-left:4px solid var(--rule);background:var(--sheet);padding:4px 10px;font-size:12.5px;line-height:1.4}.gkey b{display:block}
+#guide dl{display:grid;grid-template-columns:max-content 1fr;gap:3px 16px;margin:8px 0 4px;font-size:13px}#guide dt{font-weight:600}#guide dd{margin:0;color:var(--mute)}
+#guide details{margin-top:10px}
+</style></head><body>
+<div class="modebar" id="modebar"><b>VaxTrace · Smart Seal</b>
+<button id="mSim" class="on">Simulation</button><button id="mLive">Real backend</button>
+<span class="conn unk" id="lvConn" title="Health check of the gateway">LIVE BACKEND: NOT CHECKED</span>
+<span id="liveCfg" hidden>
+<label>gateway <input id="lvUrl" value="http://127.0.0.1:8000" aria-label="Gateway URL"></label>
+<label>API key <input id="lvKey" type="password" value="demo-only-change-me" aria-label="Gateway API key"></label>
+<label>shipment <select id="lvShip" aria-label="Shipment"></select></label>
+<button id="lvRefresh">Refresh</button><button id="lvExport">Export audit report</button>
+</span></div>
+<div class="wrap" id="simRoot">
+<header><h1>Seal custody simulator</h1>
+<p class="m">A browser simulation of a tamper-evident seal riding with vaccine cargo, and the shared ledger four parties use to hold it honest. Hashes, signatures and Merkle roots are computed for real. The sensors, the secure-element chip and the four validators are stand-ins for the hardware you would build.</p></header>
+<section class="p" id="guide"><details open><summary>New here? Read this first (1 minute)</summary>
+<div class="gbody">
+<div>
+<h4>What is this?</h4>
+<p>A <b>smart seal</b> travels with a vaccine shipment and records temperature, shocks and whether the box was opened. Each record is locked to the one before it, and a compact fingerprint of every batch is saved on a ledger shared by four organisations (manufacturer, transporter, pharmacy, regulator). At the destination, an independent check re-reads everything and decides <b>ACCEPT</b>, <b>QUARANTINE</b> or <b>REJECT</b>.</p>
+<p>The point: if someone later edits the records to hide a problem, the change is <b>detected</b>. This simulator lets you play the honest shipment and the dishonest transporter.</p>
+<div class="grs">
+<div><b style="color:var(--ok)">Real, running in your browser</b>SHA-256 hashes, ECDSA P-256 signatures, Merkle trees, hash chains, contract rules and the verifier logic.</div>
+<div class="gs"><b style="color:var(--warn)">Simulated stand-ins here</b>Sensors (sliders), the secure-element chip, the 4-node ledger and the network.</div>
+<div class="gb2"><b style="color:var(--cold)">Real backend mode (top bar)</b>The same story against a running FastAPI gateway, Solidity contracts and a separate verifier service. Needs the backend running; the simulation works without it.</div>
+</div>
+</div>
+<div>
+<h4>Try it in 4 steps</h4>
+<div class="gsteps">
+<div class="gstep"><i>Step 1</i><strong>Run a normal shipment</strong><span>The seal logs readings in range and three handoffs are signed by both sides.</span><button type="button" data-go="bNorm">Run normal shipment</button></div>
+<div class="gstep"><i>Step 2</i><strong>Arrive and verify</strong><span>The destination re-checks everything on its own. Expect <b>ACCEPT</b>.</span><button type="button" data-go="bArr">Arrive and verify</button></div>
+<div class="gstep"><i>Step 3</i><strong>Now cheat</strong><span>The transporter edits out a hot reading. The check expects <b>REJECT</b>.</span><button type="button" data-go="cheat">Edit a record, then verify</button></div>
+<div class="gstep"><i>Step 4</i><strong>Or sit back</strong><span>A guided demo runs several attacks in turn and explains each one.</span><button type="button" data-go="bDemo">Start guided demo</button></div>
+</div>
+</div>
+</div>
+<div class="gkey">
+<div style="border-left-color:var(--ok)"><b style="color:var(--ok)">ACCEPT</b>All checks passed. Records are intact and match the ledger.</div>
+<div style="border-left-color:var(--warn)"><b style="color:var(--warn)">QUARANTINE</b>Not proven bad, but needs a human look (for example a short excursion or moderate shock).</div>
+<div style="border-left-color:var(--bad)"><b style="color:var(--bad)">REJECT</b>Evidence failed a cryptographic check or a serious limit. Do not use.</div>
+</div>
+<details><summary style="font-size:14px">Plain-English glossary</summary><dl>
+<dt>Hash chain</dt><dd>Each record includes the fingerprint of the previous one, so changing, deleting or reordering a record breaks the chain.</dd>
+<dt>Merkle root</dt><dd>One fingerprint for a whole batch of records. Change any record and the root no longer matches.</dd>
+<dt>Digital signature</dt><dd>Proof that a specific key (the seal's, or a party's) approved something. Forging one needs that key.</dd>
+<dt>Ledger</dt><dd>A record book kept by four independent organisations. New entries need at least 3 of 4 to agree.</dd>
+<dt>Custody handoff</dt><dd>Responsibility passes from one party to the next only when both the sender and the receiver sign.</dd>
+<dt>Counter</dt><dd>A number that only goes up. It stops an old signed message from being replayed as new.</dd>
+<dt>Off-chain records</dt><dd>The full raw readings, kept outside the ledger. Only their fingerprints go on it.</dd>
+</dl><p class="m" style="margin:4px 0 0;font-size:12.5px">Limits used here (2–8°C, 15-minute excursion, 2.5 g shock) are demonstration values, not medical or regulatory thresholds. The system detects inconsistent evidence; it cannot prove a sensor was physically truthful.</p></details>
+</details></section>
+<div class="bar">
+<button id="bRun">Pause</button><select id="sp" title="Records logged per second"><option>1</option><option>4</option><option>16</option></select>
+<button id="bRes">Reset</button><button id="bNorm">Run a normal shipment</button><button id="bArr" title="The seal closes its last batch, the verifier runs, and the contract stores the verdict">Arrive and verify</button>
+<button id="bTest">Self-test</button><button id="bDemo">Guided demo</button><button id="bIndia" title="Jump to the India vaccine cold-chain case study">India case study</button><button id="bExp">Save audit JSON</button><span id="cap"></span></div>
+<div class="stage"><div><section class="p" title="ESP32 plus secure element plus sensors. The signing key exists only inside the secure element."><h3>The seal</h3><div id="oled" class="oled"></div>
+<div><span id="l1" class="led"></span><span id="l2" class="led"></span><span id="l3" class="led"></span><span id="bz" class="m"></span></div>
+<div class="m">Secure element counter <b id="ctr">0</b>, public key <code id="pk"></code></div>
+<p>Temperature <input id="s1" type="range" min="-5" max="20" step="0.5" value="5"> <b id="v1">5</b> °C<br>
+Shock <input id="s2" type="range" min="0" max="6" step="0.1" value="0.2"> <b id="v2">0.2</b> g</p>
+<div><button id="bLid">Open lid</button> <label><input type="checkbox" id="on" checked> online</label> <label title="Oracle problem: an attacker holds probe 1 at 5 °C while the real temperature differs"><input type="checkbox" id="sp1"> spoof probe 1</label> <span id="q" class="m"></span></div></section><section class="p" title="Held by the untrusted transporter. Edit or delete to play the attacker."><h3>Transporter's records</h3><p class="m" style="margin:0 0 6px">Change a temperature or delete a row, then verify.</p><div id="off" class="scroll"></div></section></div><div><section class="p"><h3>Attack scenarios</h3><div id="atk"></div><div id="acard"></div></section></div><div><section class="p"><h3>Destination check</h3><div id="ver" class="m">Press "Arrive and verify".</div></section><section class="p"><h3>Custody</h3><div id="cust"></div><p><button id="h1">Handoff, both sign</button> <button id="h2">Sender only</button> <button id="h3">Receiver refuses</button></p><div id="hmsg" class="m"></div></section></div></div>
+<section class="p" id="india">
+<h3>India Case Study — Vaccine Cold Chain</h3>
+<p class="lead">India already monitors vaccine logistics and cold-chain conditions; our Smart Seal adds a cryptographically verifiable custody and evidence layer for multi-party shipment disputes.</p>
+
+<h4>Scale of the programme <span class="bd real">Real figures, UN sources</span></h4>
+<div class="gh">Immunization programme <span class="m">UNICEF India</span></div>
+<div class="stats">
+<div class="stat"><b>~26 million</b><span>newborns targeted for immunization each year</span></div>
+<div class="stat"><b>~34 million</b><span>pregnant women targeted each year</span><i>UNICEF's figure. UNDP (Apr 2026) gives about 29 million.</i></div>
+<div class="stat"><b>13 million+</b><span>immunization sessions held each year</span></div>
+</div>
+<div class="gh">eVIN cold-chain platform <span class="m">UNDP India. Figures below come from different pages and dates.</span></div>
+<div class="stats">
+<div class="stat"><b>~30,000</b><span>cold chain points where eVIN is operational</span><i>UNDP story, 24 Apr 2026</i></div>
+<div class="stat"><b>733</b><span>districts where eVIN is implemented</span><i>UNDP eVIN project page</i></div>
+<div class="stat"><b>29,000+</b><span>vaccine storage centres live on eVIN</span><i>UNDP eVIN project page</i></div>
+<div class="stat"><b>~25,000</b><span>temperature loggers installed</span><i>UNDP eVIN project page</i></div>
+</div>
+<p class="m" style="margin:2px 0 0;max-width:92ch">eVIN digitizes vaccine stock and storage-temperature records. Its SIM-based loggers are installed in refrigerators at cold chain points (UNDP).</p>
+<div class="note"><b>India already has digital vaccine stock and cold-chain temperature monitoring. Our project is designed as an additional shipment-level evidence and custody layer, not a replacement for existing systems such as eVIN.</b></div>
+
+<h4>How vaccines move <span class="bd real">Real structure, simplified</span></h4>
+<div class="flow">
+<div class="nd"><b>Vaccine manufacturer</b></div><span class="ar">→</span>
+<div class="nd"><b>Regional / state vaccine store</b></div><span class="ar">→</span>
+<div class="nd"><b>District vaccine store</b></div><span class="ar">→</span>
+<div class="nd"><b>Cold chain point</b><small>PHC, CHC, UPHC, UCHC</small></div><span class="ar">→</span>
+<div class="nd"><b>Health facility</b></div><span class="ar">→</span>
+<div class="nd"><b>Beneficiary</b></div>
+</div>
+<p class="m" style="margin:0;max-width:92ch">India's vaccine programme operates through a large, multi-stage cold-chain network involving multiple storage and custody transitions.</p>
+<div class="card"><b>Gujarat example</b> <span class="bd real">Documented Gujarat example — UNICEF, 7 Oct 2025</span>
+<div class="gflow">
+<div><b>Gandhinagar</b><br>Regional Vaccine Store, which also serves as the State Vaccine Store</div><span class="ar">→</span>
+<div><b>33 + 8</b><br>District Vaccine Stores and Corporation Vaccine Stores</div><span class="ar">→</span>
+<div><b>2,300+</b><br>Cold Chain Points, including PHCs, CHCs, UPHCs and UCHCs</div></div>
+<div class="m">One state's structure, not the national network. Gandhinagar is one of six Regional Vaccine Stores in Gujarat. Each step multiplies the places where custody changes hands.</div></div>
+
+<h4>Demonstration threat scenario <span class="bd sim">Simulated</span></h4>
+<span class="hyp">Hypothetical attack scenario — demonstration only</span>
+<p class="m" style="margin:0 0 8px;max-width:92ch">Not a claim that this event occurred in India. The Smart Seal travels with a vaccine box. On the road the refrigeration fails, and the transporter, who holds the off-chain records, rewrites them.</p>
+<div class="two" style="align-items:center">
+<div>
+<svg class="scn" viewBox="0 0 780 215" role="img" aria-label="A vaccine box carrying a Smart Seal travels from the manufacturer by truck to a vaccine store. Refrigeration fails on the truck.">
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b6d7e"/></marker></defs>
+<line class="ln thin" x1="8" y1="178" x2="772" y2="178"/>
+<rect class="ln fl" x="24" y="112" width="96" height="66"/>
+<polyline class="ln" points="24,112 24,94 54,112 54,94 84,112 84,94 120,112"/>
+<rect class="ln" x="62" y="146" width="22" height="32"/>
+<text x="72" y="198" text-anchor="middle">Manufacturer</text>
+<rect class="ln fl" x="140" y="150" width="34" height="28"/><line class="ln" x1="140" y1="158" x2="174" y2="158"/>
+<rect class="seal" x="147" y="164" width="16" height="8"/>
+<text class="mu" x="157" y="140" text-anchor="middle">Smart Seal</text>
+<path class="arw" d="M196,160 L288,160" marker-end="url(#ah)"/>
+<text class="mu" x="242" y="150" text-anchor="middle">handoff, both sign</text>
+<rect class="ln fl" x="300" y="100" width="112" height="70"/>
+<path class="ln fl" d="M412,118 L448,118 L470,144 L470,170 L412,170 Z"/>
+<circle class="ln fl" cx="338" cy="178" r="10"/><circle class="ln fl" cx="448" cy="178" r="10"/>
+<rect class="ln fl" x="322" y="124" width="44" height="36"/><line class="ln" x1="322" y1="133" x2="366" y2="133"/>
+<rect class="seal" x="332" y="142" width="20" height="10"/>
+<text class="mu" x="390" y="143" text-anchor="middle">Smart</text><text class="mu" x="390" y="158" text-anchor="middle">Seal</text>
+<text x="356" y="198" text-anchor="middle">Transporter</text>
+<circle class="wn" cx="356" cy="60" r="14"/><text class="wt" x="356" y="66" text-anchor="middle" style="font-size:18px">!</text>
+<text class="wt" x="378" y="58">Refrigeration failure</text><text class="mu" x="378" y="74">cargo warms to 13°C</text>
+<path class="arw" d="M486,160 L640,160" marker-end="url(#ah)"/>
+<text class="mu" x="563" y="150" text-anchor="middle">handoff, both sign</text>
+<rect class="ln fl" x="656" y="104" width="100" height="74"/>
+<polyline class="ln" points="646,104 706,74 766,104"/>
+<rect class="ln" x="696" y="140" width="20" height="38"/>
+<text x="706" y="198" text-anchor="middle">Vaccine store</text>
+</svg>
+<p class="m" style="margin:4px 0 0;font-size:12.5px">The seal is attached at dispatch. It logs, hash-chains and signs; it does not depend on the transporter's systems.</p>
+</div>
+<div>
+<div id="csChart"></div><div id="csLeg" class="m" style="font-size:12.5px"></div>
+<table class="rvs"><thead><tr><th>Real reading<th><th>Edited record</tr></thead><tbody id="csTab"></tbody></table>
+<p class="m" style="margin:4px 0 0;font-size:12.5px">Hypothetical attacker action: the transporter edits the off-chain record.</p>
+</div></div>
+
+<h4>What the Smart Seal adds</h4>
+<div class="pl">
+<div id="pl0"><b>Sensors</b>Record the shipment condition: temperature, shock, lid.</div>
+<div id="pl1"><b>Hash chain</b>Makes unauthorized record changes detectable.</div>
+<div id="pl2"><b>Secure element</b>Signs important data using a device key that is designed to remain inside the secure chip.</div>
+<div id="pl3"><b>Merkle root</b>Creates a compact fingerprint of a batch of records.</div>
+<div id="pl4"><b>Shared ledger</b>Lets multiple authorized parties maintain a common record of the cryptographic proof.</div>
+<div id="pl5"><b>Verifier</b>Recomputes the evidence at destination.</div>
+<div id="pl6"><b>Verdict</b>ACCEPT, QUARANTINE or REJECT, with reasons.</div>
+</div>
+
+<h4>Run it with the real simulator <span class="bd calc">Real computation in your browser</span></h4>
+<div class="two">
+<div>
+<p style="margin:0 0 8px"><button id="csGo">Run India Case Study</button> <span class="m" style="font-size:12.5px">Uses the same seal, ledger and verifier as the panels above, so they will show this run.</span></p>
+<ol class="csl">
+<li id="cs0"><b>Shipment started</b><span class="dyn"></span></li>
+<li id="cs1"><b>Transporter receives custody</b><span class="dyn"></span></li>
+<li id="cs2"><b>Refrigeration failure detected</b><span class="dyn"></span></li>
+<li id="cs3"><b>Batch anchored</b><span class="dyn"></span></li>
+<li id="cs4"><b>Transporter attempts to edit temperature records</b><span class="dyn"></span></li>
+<li id="cs5"><b>Destination verification</b><span class="dyn"></span></li>
+</ol>
+</div>
+<div id="csRes" class="m">Press "Run India Case Study". The verifier's result appears here.</div>
+</div>
+<p class="jl" style="margin:14px 0 0"><b>Look inside the simulator: </b>
+<a href="#" data-jump="atk">Explore the attack →</a><a href="#" data-jump="off">Inspect the changed records →</a><a href="#" data-jump="mk">Inspect cryptographic proof →</a><a href="#" data-jump="nodes">Inspect validator agreement →</a><a href="#" data-jump="cust">Inspect custody →</a><a href="#" data-jump="ver">See final decision →</a></p>
+
+<h4>Why this matters</h4>
+<div class="two">
+<div><p style="margin:0 0 8px"><b>Existing systems answer:</b><br>“Where is the vaccine stock and what is the recorded temperature?”</p>
+<p style="margin:0"><b>Our project additionally asks:</b><br>“Can multiple parties independently verify that the shipment history and custody record were not quietly altered after the event?”</p></div>
+<div><div class="plus"><span class="t">Monitoring</span><span class="o">+</span><span class="t">Custody</span><span class="o">+</span><span class="t">Cryptographic evidence</span><span class="o">+</span><span class="t">Multi-party verification</span></div>
+<p class="m" style="margin:4px 0 0;font-size:12.5px">A different trust requirement, not a claim of being better than existing systems. eVIN's loggers sit in storage equipment (UNDP); the seal is attached to the shipment and signs evidence at each handoff.</p></div></div>
+<p style="margin:10px 0 0;max-width:92ch"><b>What changes:</b> a transporter can no longer gain from hiding an excursion. As the run shows, an honest record can lead to inspection, while an edited one is exposed as edited. <b>A realistic first step</b> is a small pilot: seals on a few shipments along one state-store-to-district-store route, read alongside the existing records, measuring detection, time to verdict and cost per seal. Nothing is replaced.</p>
+
+<h4>What is real and what is simulated</h4>
+<div class="trio">
+<div class="r"><b>Real Indian context</b><ul><li>Indian vaccine programme scale</li><li>eVIN cold-chain monitoring</li><li>Gujarat vaccine-store and cold-chain structure</li></ul></div>
+<div class="c"><b>Computed for real in this browser</b><ul><li>SHA-256 hashes and hash chain</li><li>ECDSA P-256 signatures</li><li>Merkle roots and the destination verifier</li><li>Smart-contract rules</li></ul></div>
+<div class="s"><b>Simulated</b><ul><li>The transporter, the edit and the refrigeration failure</li><li>Sensors and the secure-element chip</li><li>The four validators and their votes</li></ul></div>
+</div>
+
+<h4>What this does not prove</h4>
+<div class="lim"><b>Important limitation</b><br>“A valid cryptographic signature proves that the data was produced by the registered device/key. It does not prove that a physical sensor could never have been fooled.”
+<ul style="margin-top:6px"><li>Sensor spoofing</li><li>Physical sensor manipulation</li><li>Key-extraction attacks</li><li>Validator majority collusion</li><li>Loss of every off-chain copy</li></ul>
+<span class="m">The full list is in “What this does not protect against” below.</span></div>
+
+<details><summary>How I would explain this to a judge</summary>
+<blockquote>“India already has large-scale vaccine cold-chain monitoring. Our project addresses a different question: when multiple independent organizations handle the same shipment, how can they later verify that the shipment history was not quietly rewritten by one participant? The Smart Seal creates device-rooted evidence, while the permissioned shared ledger stores compact cryptographic proofs and custody events that multiple parties can independently verify.”</blockquote></details>
+
+<div class="src"><b>Sources</b>
+<p>UNICEF India — <a href="https://www.unicef.org/india/what-we-do/immunization" target="_blank" rel="noopener">Immunization and Child Health</a></p>
+<p>UNDP India — <a href="https://www.undp.org/india/projects/improving-vaccination-systems-evin" target="_blank" rel="noopener">Improving Vaccination Systems (eVIN)</a></p>
+<p>UNICEF India — <a href="https://www.unicef.org/india/stories/cold-chain-care-delivering-vaccines-safely-every-mother-and-child" target="_blank" rel="noopener">“From Cold Chain to Care: Delivering Vaccines Safely to Every Mother and Child”</a>, 7 October 2025</p>
+<p>UNDP India — <a href="https://www.undp.org/india/stories/small-shot-big-promise-how-immunization-reaches-every-child" target="_blank" rel="noopener">“A Small Shot, A Big Promise”</a>, 24 April 2026 (source of the ~30,000 cold chain points and the ~29 million pregnant women figure)</p>
+<p>Figures are quoted separately because sources differ in year and definition, and are not added together or compared. Other publications give different logger counts. No figure on this panel measures spoilage, fraud or temperature excursions in India, and none is our own estimate. The links need internet; the simulation does not.</p></div>
+</section>
+<div class="cols">
+<section class="p"><h3>Record log</h3><div id="recs" class="scroll"></div></section><section class="p" title="Merkle tree of the newest anchored batch. Red nodes differ from what the seal originally signed."><h3>Merkle tree, latest batch</h3><div id="mk"></div></section><section class="p"><h3>Shared ledger</h3><p class="m" style="margin:0 0 6px">A block commits only with 3 of 4 validator votes.</p><div id="nodes"></div><div id="blocks" class="scroll"></div></section><section class="p"><h3>What this does not protect against</h3><ul><li>Physical sensor spoofing. A signature shows which device produced a reading, not that the reading is true. Redundant probes help only if both are not fooled.</li><li>Lab-grade key extraction from the secure element.</li><li>Majority validator collusion (3 of 4 here).</li><li>Jamming. The seal keeps logging offline, but anchoring is delayed.</li><li>Loss of every off-chain copy. The chain proves data existed but cannot restore it, so replicate across parties.</li></ul></section><section class="p"><h3>Verdict rules</h3><p class="m" style="margin:0 0 6px">Changes apply to the next shipment.</p>Temperature range <input id="c_lo" type="number" value="2"> to <input id="c_hi" type="number" value="8"> °C<br>Longest excursion <input id="c_limit" type="number" value="15"> min<br>Shock limit <input id="c_shock" type="number" value="2.5" step="0.5"> g<br>Offline limit <input id="c_off" type="number" value="1200"> s<br>
+<label><input type="checkbox" id="c_red" checked> compare the two temperature probes</label></section><section class="p"><h3>Storage and cost</h3><div id="met"></div><p class="m" style="margin:10px 0 4px">Bill of materials, INR estimates you can edit</p><table id="bom"></table></section><section class="p"><h3>Audit log</h3><div id="log" class="scroll"></div></section></div></div>
+<div id="liveRoot" hidden><div class="wrap">
+<header><h1>Live backend</h1>
+<p class="m">Every value on these tabs is read from the running gateway, the blockchain and the verifier service. Nothing on these tabs is simulated by this page. If the backend is off, use Simulation mode.</p></header>
+<div class="tabs" role="tablist" id="lvTabs"></div>
+<div id="lvBody"></div><div id="lvIndia" hidden></div>
+</div></div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id),enc=new TextEncoder();
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const unhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+const sha=async s=>hex(await crypto.subtle.digest('SHA-256',enc.encode(s)));
+const canon=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,typeof o[k]==='number'?o[k].toFixed(2):o[k]]));
+const sh=h=>h?String(h).slice(0,8)+'…':'—',hc=h=>`<code title="${h}" onclick="navigator.clipboard?.writeText('${h}')">${sh(h)}</code>`;
+const ECDSA={name:'ECDSA',hash:'SHA-256'};
+async function verifySig(pub,msg,sig){try{const k=await crypto.subtle.importKey('raw',unhex(pub),{name:'ECDSA',namedCurve:'P-256'},false,['verify']);return await crypto.subtle.verify(ECDSA,k,unhex(sig),enc.encode(msg))}catch{return false}}
+class SecureElement{#k;#c=0;constructor(k,pub){this.#k=k;this.pub=pub}
+ static async create(){const kp=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},false,['sign','verify']);return new SecureElement(kp.privateKey,hex(await crypto.subtle.exportKey('raw',kp.publicKey)))}
+ getPublicKey(){return this.pub} get counter(){return this.#c}
+ async sign(p){const c=++this.#c;return{counter:c,sig:hex(await crypto.subtle.sign(ECDSA,this.#k,enc.encode(canon(p)+'|'+c)))}}
+ async signMsg(m){return hex(await crypto.subtle.sign(ECDSA,this.#k,enc.encode(m)))}}
+async function levels(hs){let c=hs.length?hs:[await sha('')];const L=[c];while(c.length>1){const n=[];for(let i=0;i<c.length;i+=2)n.push(await sha(c[i]+(c[i+1]||c[i])));L.push(n);c=n}return L}
+const merkleRoot=async hs=>(await levels(hs)).pop()[0];
+class Ledger{constructor(){this.nodes=['Manufacturer','Transporter','Pharmacy','Regulator'].map(n=>({n,up:1,bad:0,chain:[]}))}
+ healthy(){return this.nodes.find(n=>n.up&&!n.bad)}
+ async commit(tx){const votes=this.nodes.map(n=>n.up&&!n.bad?1:0),ok=votes.reduce((a,b)=>a+b);
+  if(ok<3)throw new Error(`QBFT_NO_QUORUM: ${ok}/4 approvals, need 3`);
+  const ref=this.healthy().chain,prev=ref.length?ref.at(-1).hash:'0',blk={n:ref.length,prev,tx,votes,time:S.T};
+  blk.hash=await sha(prev+canon({n:blk.n,tx:JSON.stringify(tx)}));this.nodes.forEach(n=>{if(n.up)n.chain.push(structuredClone(blk))});return blk}
+ async audit(){const out=[];for(const n of this.nodes){let ok=1,p='0';for(const b of n.chain){if(b.prev!==p||b.hash!==await sha(p+canon({n:b.n,tx:JSON.stringify(b.tx)}))){ok=0;break}p=b.hash}out.push({n:n.n,ok,up:n.up,tip:n.chain.at(-1)?.hash})}
+  const t={};out.forEach(o=>o.up&&o.ok&&(t[o.tip]=(t[o.tip]||0)+1));const maj=Object.keys(t).sort((a,b)=>t[b]-t[a])[0];out.forEach(o=>o.diverge=o.up&&(!o.ok||o.tip!==maj));return out}
+ toggleUp(i){const n=this.nodes[i];n.up=n.up?0:1;if(n.up)n.chain=structuredClone(this.healthy()?.chain||[])}
+ toggleBad(i){const n=this.nodes[i];if(!n.bad){n.bad=1;const b=n.chain.at(-1);if(b)b.tx={...b.tx,forged:true}}else{n.bad=0;n.chain=structuredClone(this.healthy()?.chain||[])}}}
+class Contract{constructor(L){this.L=L;this.seals={};this.ship=null;this.batches=[];this.tamper=[];this.hand=[];this.nonces=new Set();this.last={counter:0,root:'0',id:0}}
+ role(r,ok){if(!ok.includes(r))throw new Error(`ROLE_DENIED: ${r} may not call this`)}
+ tx(type,d){return this.L.commit({type,...d})}
+ async registerSeal(role,id,pub,mfr){this.role(role,['MANUFACTURER']);this.seals[id]={pub,mfr,revoked:0};return this.tx('registerSeal',{id,pub:sh(pub),mfr})}
+ async startShipment(role,id,sealId,th){this.role(role,['MANUFACTURER']);if(!this.seals[sealId])throw new Error('UNREGISTERED_SEAL');this.ship={id,sealId,th};return this.tx('startShipment',{id,sealId,th})}
+ async chk(sealId,p,sig,counter){const s=this.seals[sealId];if(!s)throw new Error('UNREGISTERED_SEAL');if(s.revoked)throw new Error('SEAL_REVOKED');
+  if(!await verifySig(s.pub,canon(p)+'|'+counter,sig))throw new Error('SIGNATURE_INVALID: not signed by the registered secure-element key');
+  if(counter<=this.last.counter)throw new Error(`STALE_COUNTER: ${counter} <= ${this.last.counter} (replay)`)}
+ async commitBatchRoot(sealId,b,sig,counter){await this.chk(sealId,b,sig,counter);
+  if(b.batchId!==this.last.id+1)throw new Error('BATCH_ID_SEQUENCE: expected '+(this.last.id+1));if(b.prevRoot!==this.last.root)throw new Error('PREV_ROOT_MISMATCH');
+  await this.tx('commitBatchRoot',{sealId,batchId:b.batchId,root:sh(b.root),counter});Object.assign(this.last,{counter,root:b.root,id:b.batchId});this.batches.push({p:b,counter,sig,at:S.T})}
+ async recordTamperEvent(sealId,e,sig,counter){await this.chk(sealId,e,sig,counter);await this.tx('recordTamperEvent',{sealId,type:e.type,seq:e.seq,counter});this.last.counter=counter;this.tamper.push({p:e,counter,sig,at:S.T})}
+ async transferCustody(id,from,to,sigFrom,sigTo,nonce,atSeq){if(!sigFrom||!sigTo)throw new Error('NEED_BOTH_SIGNATURES: single-party transfer rejected');
+  if(this.nonces.has(nonce))throw new Error('NONCE_REUSED (replay)');const m=canon({shipment:id,from,to,nonce,atSeq});
+  for(const[p,s]of[[from,sigFrom],[to,sigTo]])if(!await verifySig(S.P[p].pub,m,s))throw new Error('BAD_SIGNATURE from '+p);
+  const l=this.hand.at(-1);if((l?l.to:'MANUFACTURER')!==from)throw new Error('CUSTODY_CHAIN: holder is not '+from);
+  await this.tx('transferCustody',{from,to,nonce});this.nonces.add(nonce);this.hand.push({from,to,nonce,atSeq,sigFrom,sigTo,at:S.T})}
+ async revokeSeal(role,id){this.role(role,['REGULATOR','MANUFACTURER']);this.seals[id].revoked=1;return this.tx('revokeSeal',{id,by:role})}
+ async finalizeVerdict(role,r){this.role(role,['PHARMACY','REGULATOR']);return this.tx('finalizeVerdict',{verdict:r.verdict,codes:r.codes})}}
+class Seal{constructor(se,id){this.se=se;this.id=id;this.seq=0;this.prev='0';this.buf=[];this.q=[];this.online=1;this.bid=0;this.pr0='0';this.lid0=0;this.s={temp:5,shock:0.2,lid:0,spoof:0}}
+ async tick(){const s=this.s;S.T+=300;const r={seq:++this.seq,ts:S.T,t1:s.spoof?5:s.temp,t2:s.temp,shock:s.shock,lid:s.lid,prevHash:this.prev};
+  r.hash=await sha(canon(r));this.prev=r.hash;S.store.records.push(r);this.buf.push(r);let tam=0;
+  if(s.lid&&!this.lid0){tam=1;const e={sealId:this.id,type:'LID_OPEN',seq:r.seq,ts:r.ts},g=await this.se.sign(e);this.q.push({k:'T',p:e,...g})}this.lid0=s.lid;
+  if(tam||this.buf.length>=4)await this.close();else await this.flush()}
+ async close(){if(!this.buf.length)return;const hs=this.buf.map(r=>r.hash),b={sealId:this.id,batchId:++this.bid,firstSeq:this.buf[0].seq,lastSeq:this.buf.at(-1).seq,count:hs.length,prevRoot:this.pr0,root:await merkleRoot(hs),ts:S.T};
+  const g=await this.se.sign(b);this.pr0=b.root;S.pr[b.batchId]=hs;this.buf=[];this.q.push({k:'B',p:b,...g});await this.flush()}
+ async flush(){while(this.online&&this.q.length){const i=this.q[0];try{if(i.k==='B')await S.C.commitBatchRoot(this.id,i.p,i.sig,i.counter);else await S.C.recordTamperEvent(this.id,i.p,i.sig,i.counter);this.q.shift()}
+  catch(e){S.lastRevert=e.message;log('REVERT '+e.message,'bad');if(/QBFT/.test(e.message))break;this.q.shift()}}}}
+const REJ=new Set(['SIGNATURE_INVALID','MERKLE_MISMATCH','HASH_CHAIN_BROKEN','MISSING_DATA','SEQ_GAP','COUNTER_GAP','CUSTODY_BROKEN','SEAL_REVOKED','UNREGISTERED_SEAL','EXCURSION_EXCEEDED','TIMESTAMP_ORDER','NO_ANCHORS']);
+const MSG={SIGNATURE_INVALID:'A batch signature does not match the registered key.',MERKLE_MISMATCH:'Off-chain records do not reproduce the on-chain Merkle root.',HASH_CHAIN_BROKEN:'A record hash or prevHash link is broken.',MISSING_DATA:'Batches anchored on-chain have no off-chain records.',SEQ_GAP:'Records are missing inside an anchored batch.',COUNTER_GAP:'Secure-element counter values are not contiguous.',CUSTODY_BROKEN:'Custody is not a complete dual-signed chain to the destination.',SEAL_REVOKED:'Seal was revoked.',UNREGISTERED_SEAL:'Seal is not registered.',EXCURSION_EXCEEDED:'Temperature excursion longer than allowed.',EXCURSION_SHORT:'Short excursion within tolerance: inspect goods.',TIMESTAMP_ORDER:'Timestamps go backwards.',NO_ANCHORS:'No anchored batches for this shipment.',LID_OPEN_UNAUTHORIZED:'Lid opened with no matching dual-signed handoff.',SENSOR_DISAGREE:'Redundant probes disagree: possible sensor spoofing.',SHOCK_EXCEEDED:'Shock above threshold.',OFFLINE_GAP:'Batch reached the chain long after it was signed.'};
+async function verify(o={}){const t0=performance.now(),c=S.C,R=S.store.records,th=c.ship?.th||S.cfg,red=o.redundant??S.cfg.red,st=[],rs=[],seal=c.seals[S.id];
+ const add=(n,ok,d,code)=>{st.push({n,ok,d});if(ok!==true)rs.push(code)};
+ add('1 Fetch on-chain roots, counters, custody',!!(c.ship&&c.batches.length),`${c.batches.length} batches, ${c.tamper.length} tamper events, ${c.hand.length} handoffs`,'NO_ANCHORS');
+ add('2 Fetch off-chain records',R.length>0,R.length+' records','MISSING_DATA');
+ let bad=0;for(let i=0;i<R.length;i++){const{hash,...x}=R[i];if(hash!==await sha(canon(x))||(i&&R[i].prevHash!==R[i-1].hash))bad++}
+ add('3 Recompute hash chain & prevHash links',!bad,bad?bad+' broken':'all valid','HASH_CHAIN_BROKEN');
+ let mm=0,ms=0,gp=0;for(const b of c.batches){const rr=R.filter(r=>r.seq>=b.p.firstSeq&&r.seq<=b.p.lastSeq);if(!rr.length){ms++;continue}if(rr.length<b.p.count){gp++;continue}if(await merkleRoot(rr.map(r=>r.hash))!==b.p.root)mm++}
+ add('4a Records exist for every anchored batch',!ms,ms+' batches without data','MISSING_DATA');add('4b Sequence continuity inside batches',!gp,gp+' batches with gaps','SEQ_GAP');add('4c Recomputed Merkle root = on-chain root',!mm,mm+' mismatches','MERKLE_MISMATCH');
+ let sg=0;for(const b of[...c.batches,...c.tamper])if(!await verifySig(seal?.pub,canon(b.p)+'|'+b.counter,b.sig))sg++;
+ add('5 Verify signatures vs registered public key',!sg&&!!seal,sg+' invalid','SIGNATURE_INVALID');
+ const cs=[...c.batches,...c.tamper].map(b=>b.counter).sort((a,b)=>a-b);add('6a Counter monotonic & contiguous',!cs.some((x,i)=>x!==i+1),'counters '+cs.join(','),'COUNTER_GAP');
+ add('6b Timestamp ordering',!R.some((r,i)=>i&&r.ts<R[i-1].ts),'','TIMESTAMP_ORDER');
+ const rt=['MANUFACTURER','TRANSPORTER','WAREHOUSE','PHARMACY'];add('7 Custody chain (dual-signed, no gaps)',c.hand.length===3&&c.hand.every((h,i)=>h.from===rt[i]&&h.to===rt[i+1]),c.hand.map(h=>h.from[0]+'→'+h.to[0]).join(' '),'CUSTODY_BROKEN');
+ add('7b Seal registered and not revoked',!!seal&&!seal.revoked,'',seal?'SEAL_REVOKED':'UNREGISTERED_SEAL');
+ const out=R.filter(r=>r.t1<th.lo||r.t1>th.hi).length*5;add('8a Temperature excursion '+out+' min',out?out<=th.limit?'w':false:true,'limit '+th.limit,out<=th.limit?'EXCURSION_SHORT':'EXCURSION_EXCEEDED');
+ add('8b Redundant probes agree',!(red&&R.some(r=>Math.abs(r.t1-r.t2)>3))||'w','check '+(red?'on':'off'),'SENSOR_DISAGREE');
+ add('8c Shock below threshold',!R.some(r=>r.shock>th.shock)||'w','','SHOCK_EXCEEDED');
+ add('8d Lid events matched by authorized handoff',c.tamper.every(t=>c.hand.some(h=>Math.abs(h.atSeq-t.p.seq)<=1))||'w',c.tamper.length+' events','LID_OPEN_UNAUTHORIZED');
+ add('8e Offline gap',c.batches.every(b=>b.at-b.p.ts<=S.cfg.off)||'w','','OFFLINE_GAP');
+ const codes=[...new Set(rs)];return{verdict:codes.some(x=>REJ.has(x))?'REJECT':codes.length?'QUARANTINE':'ACCEPT',codes,reasons:codes.map(x=>({code:x,msg:MSG[x]})),steps:st,ms:performance.now()-t0}}
+let S=null,timer=null,demoOn=false,busy=Promise.resolve();
+const run=f=>{const p=busy.then(f);busy=p.catch(()=>{});return p};
+function log(m,c=''){S.logs.unshift(`<div class="${c}">${new Date().toLocaleTimeString()} ${m}</div>`);S.logs.length=Math.min(S.logs.length,60)}
+async function reset(){const cfg=S?.cfg||{lo:2,hi:8,limit:15,shock:2.5,red:1,off:1200},se=await SecureElement.create();
+ S={T:1.7e9|0,id:'SEAL-A1',store:{records:[]},pr:{},nonce:1,cfg,P:{},logs:[],lastRevert:'',last:null};
+ for(const p of['MANUFACTURER','TRANSPORTER','WAREHOUSE','PHARMACY'])S.P[p]=await SecureElement.create();
+ S.L=new Ledger();S.C=new Contract(S.L);S.seal=new Seal(se,S.id);log('Reset: new secure-element key generated (non-extractable)');
+ const c=S.C;await c.registerSeal('MANUFACTURER',S.id,se.pub,'Acme Pharma');await c.startShipment('MANUFACTURER','SHP-001',S.id,{lo:cfg.lo,hi:cfg.hi,limit:cfg.limit,shock:cfg.shock});
+ $('bLid').textContent='Open lid';$('on').checked=true;$('sp1').checked=false}
+async function handoff(mode='both'){const c=S.C,h=c.hand.length,rt=['MANUFACTURER','TRANSPORTER','WAREHOUSE','PHARMACY'],from=rt[h],to=rt[h+1];if(!to)throw new Error('ROUTE_COMPLETE');
+ const nonce='n'+S.nonce++,at=S.seal.seq,m=canon({shipment:'SHP-001',from,to,nonce,atSeq:at}),sf=await S.P[from].signMsg(m),st=mode==='both'?await S.P[to].signMsg(m):null;
+ try{await c.transferCustody('SHP-001',from,to,sf,st,nonce,at);log(`Handoff ${from}→${to} dual-signed`,'ok')}catch(e){log('REVERT '+e.message,'bad');throw e}}
+async function normal(o={}){await reset();const s=S.seal;
+ for(let i=1;i<=12;i++){if(o.off&&i===o.off[0])s.online=0;s.s.temp=o.hot?.includes(i)?12:5;s.s.spoof=o.hot&&o.spoof?1:0;s.s.spoof=o.spoof?.includes(i)?1:0;if(o.spoof?.includes(i))s.s.temp=12;
+  await s.tick();if(o.off&&i===o.off[1]){s.online=1;await s.flush()}if(i%4===0&&i/4<=(o.h??3))await handoff()}
+ s.s.temp=5;s.s.spoof=0}
+async function rehash(from,mut){const R=S.store.records;for(let i=from;i<R.length;i++){if(i===from)mut(R[i]);R[i].prevHash=i?R[i-1].hash:'0';const{hash,...x}=R[i];R[i].hash=await sha(canon(x))}}
+const rev=async f=>{try{await f();return null}catch(e){log('REVERT '+e.message,'bad');return e.message}};
+async function ticks(n){for(let i=0;i<n;i++)await S.seal.tick()}
+const ATT=[
+{n:'Normal shipment',exp:'ACCEPT',w:'Three dual-signed handoffs, all readings in range.',b:'Verifier: every cryptographic check passes.',l:'A clean result only proves the log is intact, not that the probe was honest.',run:async()=>({})},
+{n:'1 Edit excursion out of log',exp:'MERKLE_MISMATCH',o:{hot:[5,6]},w:'Transporter lowers the hot readings and recomputes the entire hash chain so it looks consistent.',b:'Merkle root anchored on-chain by the seal (transporter cannot rewrite the ledger).',l:'Holds only while the transporter cannot rewrite the ledger or sign as the seal.',run:async()=>{const R=S.store.records,i=R.findIndex(r=>r.t1>8);await rehash(i,r=>{r.t1=5;r.t2=5});for(let j=i+1;j<R.length;j++)if(R[j].t1>8)await rehash(j,r=>{r.t1=5;r.t2=5})}},
+{n:'2 Delete a record',exp:'SEQ_GAP',w:'Transporter removes one record from a batch.',b:'seq continuity + record count anchored on-chain.',l:'Cannot restore the deleted data.',run:async()=>{S.store.records.splice(5,1)}},
+{n:'3 Reorder records',exp:'HASH_CHAIN_BROKEN',w:'Two records are swapped.',b:'Hash chain prevHash links.',l:'None specific; detected.',run:async()=>{const R=S.store.records;[R[5],R[6]]=[R[6],R[5]]}},
+{n:'4 Fabricated batch',exp:'SIGNATURE_INVALID',w:'Attacker signs a fake batch with their own key and submits it.',b:'Contract verifies against the registered secure-element public key.',l:'A stolen or extracted seal key would defeat this.',run:async()=>{const a=await SecureElement.create(),c=S.C,b={sealId:S.id,batchId:c.last.id+1,firstSeq:13,lastSeq:16,count:4,prevRoot:c.last.root,root:'ab'.repeat(32),ts:S.T},g=await a.sign(b);return{revert:await rev(()=>c.commitBatchRoot(S.id,b,g.sig,g.counter))}}},
+{n:'5 Replay old signed batch',exp:'STALE_COUNTER',w:'Attacker resubmits batch #2 with its valid signature.',b:'Monotonic counter check in the contract.',l:'Depends on the counter being non-resettable (secure element).',run:async()=>{const b=S.C.batches[1];return{revert:await rev(()=>S.C.commitBatchRoot(S.id,b.p,b.sig,b.counter))}}},
+{n:'6 Cloned seal',exp:'SIGNATURE_INVALID',w:'Firmware and config are copied to another ESP32, but the key cannot be copied: the clone generates its own key.',b:'Secure element: private key never leaves the chip.',l:'Decapping/glitching attacks on the chip are out of scope.',run:async()=>{const a=await SecureElement.create(),c=S.C,b={sealId:S.id,batchId:c.last.id+1,firstSeq:13,lastSeq:16,count:4,prevRoot:c.last.root,root:'cd'.repeat(32),ts:S.T},g=await a.sign(b);log('Clone key '+sh(a.pub)+' ≠ registered '+sh(S.seal.se.pub));return{revert:await rev(()=>c.commitBatchRoot(S.id,b,g.sig,g.counter))}}},
+{n:'7 Sensor spoofing (oracle problem)',exp:'SENSOR_DISAGREE',o:{spoof:[5,6,7,8,9,10]},w:'Attacker holds probe 1 at 5°C while real temperature is 12°C.',b:'Signatures do NOT catch it. Only the redundant probe disagreement does.',l:'If both probes are fooled, the system cannot know.',run:async()=>({off:(await verify({redundant:0})).verdict})},
+{n:'8 Lid opened & closed',exp:'LID_OPEN_UNAUTHORIZED',w:'Enclosure opened mid-transit with no handoff.',b:'Reed switch → signed tamper event anchored on-chain.',l:'A bypassed switch (before deployment) is not detected.',run:async()=>{await ticks(3);S.seal.s.lid=1;await S.seal.tick();S.seal.s.lid=0;await S.seal.tick()}},
+{n:'9 Single-party handoff / denial',exp:'NEED_BOTH_SIGNATURES',o:{h:2},w:'Sender tries to push custody without the receiver; later a party denies receipt.',b:'transferCustody requires two signatures; dual-signed records are non-repudiable.',l:'Collusion of both parties on a false story is not prevented.',run:async()=>({revert:await rev(()=>handoff('single'))})},
+{n:'10 Long offline period',exp:'OFFLINE_GAP',o:{off:[3,12]},w:'Seal is offline for 10 records; batches queue then sync.',b:'Anchor time vs signed batch time.',l:'Backdating within the gap is bounded only by counters and anchor times.',run:async()=>({})},
+{n:'11 Off-chain store wiped',exp:'MISSING_DATA',w:'Transporter deletes everything.',b:'Roots and counters remain on-chain, proving what existed.',l:'Data cannot be restored. Replicate to several parties.',run:async()=>{S.store.records.length=0}},
+{n:'12 Validator compromised, then two',exp:'QBFT',w:'One node’s copy is forged; chain continues. Then a second goes bad.',b:'Chain audit (tips disagree); quorum rule of 3 of 4.',l:'Three colluding validators break the guarantee.',run:async()=>{S.L.toggleBad(1);await ticks(4);const d=(await S.L.audit()).filter(x=>x.diverge).map(x=>x.n);S.L.toggleBad(2);S.lastRevert='';await ticks(4);return{diverge:d,revert:S.lastRevert}}},
+{n:'13 Revoked seal commits',exp:'SEAL_REVOKED',w:'Regulator revokes the seal; it keeps trying to commit.',b:'Contract revocation state and role control.',l:'Revocation power itself needs governance (insider misuse).',run:async()=>{const r0=await rev(()=>S.C.revokeSeal('TRANSPORTER',S.id));await S.C.revokeSeal('REGULATOR',S.id);S.lastRevert='';await ticks(4);return{revert:S.lastRevert,role:r0}}},
+{n:'Short excursion (10 min)',exp:'EXCURSION_SHORT',o:{hot:[5,6]},w:'Two hot readings.',b:'Verifier thresholds.',l:'Thresholds are policy choices.',run:async()=>({})},
+{n:'Long excursion (20 min)',exp:'EXCURSION_EXCEEDED',o:{hot:[5,6,7,8]},w:'Four hot readings.',b:'Verifier thresholds.',l:'Thresholds are policy choices.',run:async()=>({})}];
+async function runAttack(a){await normal(a.o||{});const x=await a.run()||{};await S.seal.close();const v=await verify();
+ const codes=v.codes,pass=a.exp==='ACCEPT'?v.verdict==='ACCEPT':a.exp==='QBFT'?x.diverge?.includes('Transporter')&&/^QBFT/.test(x.revert):a.exp==='SENSOR_DISAGREE'?x.off==='ACCEPT'&&codes.includes(a.exp):x.revert!==undefined?x.revert?.startsWith(a.exp):codes.includes(a.exp);
+ return{a,v,x,pass:!!pass}}
+function card(r){const{a,v,x}=r;$('acard').innerHTML=`<div class="card"><b>${a.n}</b><br>${a.w}<br><b>Caught by:</b> ${a.b}<br><b>Limitation:</b> ${a.l}<br>${x.revert!==undefined?`<b>Contract revert:</b> <span class="bad">${x.revert}</span><br>`:''}${x.diverge?.length?`<b>Diverged copy:</b> ${x.diverge.join(', ')} no longer matches the other validators<br>`:''}${x.off?`<b>Without redundant probe:</b> ${x.off} (undetected) → <b>with it:</b> ${v.verdict}<br>`:''}${a.exp==='QBFT'?'':`<b>Verifier result:</b> ${v.verdict} ${v.codes.join(', ')}`}</div>`;showVerify(v)}
+function showVerify(v){S.last=v;$('ver').innerHTML=v.steps.map(s=>`<div class="${s.ok===true?'ok':s.ok==='w'?'warn':'bad'}"><b class="tag">${s.ok===true?'pass':s.ok==='w'?'flag':'FAIL'}</b> ${s.n} <span class="m">${s.d}</span></div>`).join('')+`<div class="verdict ${v.verdict}">${v.verdict}</div>`+v.reasons.map(r=>`<div><code>${r.code}</code> ${r.msg}</div>`).join('')+`<div class="m" style="margin-top:4px">What this means: ${({ACCEPT:'all checks passed; the records are intact and match what was anchored on the shared ledger.',QUARANTINE:'not proven bad, but a person should inspect the goods before use.',REJECT:'the evidence failed a cryptographic check or a serious limit; do not use.'})[v.verdict]||''}</div>`+`<div class="m">time to verdict ${v.ms.toFixed(0)} ms</div>`}
+async function render(force){if(!S)return;const s=S.seal,d=s.s,R=S.store.records,r=R.at(-1),c=S.C,rv=c.seals[S.id]?.revoked,hot=d.temp<S.cfg.lo||d.temp>S.cfg.hi;
+ $('oled').textContent=`${S.id}  rec#${s.seq}\nT1 ${(d.spoof?5:d.temp).toFixed(1)}C  T2 ${d.temp.toFixed(1)}C\nSHOCK ${d.shock.toFixed(1)}g LID:${d.lid?'OPEN':'SHUT'}\n${s.online?'NET:ONLINE':'NET:OFFLINE'} Q:${s.q.length}${rv?'  REVOKED':''}`;
+ $('l1').className='led '+(!hot&&!d.lid&&!rv?'g':'');$('l2').className='led '+((hot||!s.online||s.q.length)?'a':'');$('l3').className='led '+((d.lid||rv||d.shock>S.cfg.shock)?'r':'');$('bz').textContent=(d.lid||rv)?'buzzer sounding':'buzzer quiet';
+ $('ctr').textContent=s.se.counter;$('pk').innerHTML=hc(s.se.pub);$('v1').textContent=d.temp;$('v2').textContent=d.shock;$('q').textContent=s.q.length?`queue: ${s.q.length} signed item(s)`:'';
+ $('recs').innerHTML=R.slice(-8).reverse().map(x=>`<div class="n">#${x.seq} ${x.t1.toFixed(1)}°C ${x.lid?'LID ':''}prev ${hc(x.prevHash)} → ${hc(x.hash)}</div>`).join('')||'<span class="m">No records yet</span>';
+ const au=await S.L.audit();$('nodes').innerHTML=au.map((a,i)=>`<span class="chip ${a.up&&!a.diverge?'on':''}" title="Validator node"><b>${a.n}</b> ${!a.up?'<span class=warn>OFFLINE</span>':a.diverge?'<span class=bad>DIVERGED</span>':'<span class=ok>OK</span>'} <button onclick="run(()=>{S.L.toggleUp(${i});return render()})">off/on</button><button onclick="run(()=>{S.L.toggleBad(${i});return render()})">compromise</button></span>`).join('');
+ const ch=S.L.healthy()?.chain||[];$('blocks').innerHTML=ch.slice(-6).reverse().map(b=>`<div class="n">#${b.n} <b>${b.tx.type}</b> ${hc(b.hash)} votes ${b.votes.map(v=>v?'Y':'N').join(' ')}</div>`).join('');
+ const b=c.batches.at(-1);if(b){const A=await levels(S.pr[b.p.batchId]),rr=R.filter(x=>x.seq>=b.p.firstSeq&&x.seq<=b.p.lastSeq).map(x=>x.hash),B=await levels(rr);$('mk').innerHTML=`<div class="m">Batch #${b.p.batchId} · on-chain root ${hc(b.p.root)}</div>`+B.map((lv,i)=>`<div class="row">${lv.map((x,j)=>`<span class="n ${x!==A[i]?.[j]?'bad':''}">${sh(x)}</span>`).join('')}</div>`).reverse().join('')}else $('mk').innerHTML='<span class="m">No anchored batch yet</span>';
+ const holder=c.hand.length;$('cust').innerHTML=['MANUFACTURER','TRANSPORTER','WAREHOUSE','PHARMACY'].map((p,i)=>`<span class="chip ${i===holder?'on':''}">${p}${i<holder?' (signed)':''}</span>${i<3?' → ':''}`).join('');
+ if(force||!$('off').contains(document.activeElement))$('off').innerHTML='<table><tr><th>seq<th>T1<th>lid<th>hash<th></tr>'+R.slice(-12).map(x=>`<tr><td>${x.seq}<td><input type=number step=.5 value="${x.t1}" onchange="run(async()=>{await rehash(${R.indexOf(x)},q=>{q.t1=+this.value});log('Transporter edited record ${x.seq} and re-hashed chain','warn');await render(1)})"><td>${x.lid}<td>${hc(x.hash)}<td><button onclick="run(()=>{S.store.records.splice(${R.indexOf(x)},1);log('Transporter deleted record ${x.seq}','warn');return render(1)})">del</button></tr>`).join('')+'</table>';
+ const anc=ch.filter(b=>b.tx.type==='commitBatchRoot'),ancB=anc.length?anc.reduce((a,b)=>a+JSON.stringify(b).length,0)/anc.length:0,rawB=R.length?JSON.stringify(R).length/R.length:0,tot=[...document.querySelectorAll('#bom input')].reduce((a,i)=>a+ +i.value,0);
+ $('met').innerHTML=`Batches anchored: <b>${c.batches.length}</b> covering <b>${R.length}</b> records<br>One raw record: about <b>${rawB.toFixed(0)}</b> bytes, kept off-chain. One anchored batch: about <b>${ancB.toFixed(0)}</b> bytes on-chain, whatever its size.`+(ancB?`<br>Here a batch closes every 4 records so you can watch it happen. At 60 records per batch that is about <b>${(ancB/60).toFixed(1)}</b> on-chain bytes per record, roughly ${Math.round(rawB/(ancB/60))}× less than the raw data.`:'')+`<br>Estimated cost per seal: <b>₹${tot}</b>`;$('log').innerHTML=S.logs.join('')}
+function initBom(){const rows=[['ESP32 dev board',550],['ATECC608 secure element',120],['2× DS18B20 probes (redundant)',250],['Reed switch + light sensor',60],['0.96" OLED',300],['LEDs + buzzer',30],['LiPo + charger',400],['Enclosure/PCB/strap',300]];$('bom').innerHTML=rows.map(r=>`<tr><td>${r[0]}<td><input type=number value=${r[1]} onchange="render()"></tr>`).join('')}
+function initAtk(){$('atk').innerHTML=ATT.map((a,i)=>`<button data-i="${i}">${a.n}</button>`).join('');$('atk').onclick=e=>{const i=e.target.dataset.i;if(i!=null){demoOn=false;setRun(false);run(async()=>{const r=await runAttack(ATT[i]);card(r);await render()})}}}
+function setRun(on){clearInterval(timer);timer=null;$('bRun').textContent=on?'Pause':'Resume';if(on)timer=setInterval(()=>run(async()=>{await S.seal.tick();await render()}).catch(()=>{}),1000/+$('sp').value)}
+const cap=t=>$('cap').textContent=t;
+$('bRun').onclick=()=>setRun(!timer);$('sp').onchange=()=>timer&&setRun(true);
+$('bRes').onclick=()=>run(async()=>{await reset();$('acard').innerHTML='';$('ver').textContent='Press "Arrive and verify".';await render()});
+$('bNorm').onclick=()=>{setRun(false);run(async()=>{await normal();await render()})};
+$('bArr').onclick=()=>run(async()=>{await S.seal.close();const v=await verify();showVerify(v);const e=await rev(()=>S.C.finalizeVerdict('PHARMACY',v));log('Verdict '+v.verdict+' '+v.codes.join(','),v.verdict==='ACCEPT'?'ok':'bad');await render()});
+$('s1').oninput=e=>{S.seal.s.temp=+e.target.value;render()};$('s2').oninput=e=>{S.seal.s.shock=+e.target.value;render()};
+$('bLid').onclick=e=>{const s=S.seal.s;s.lid=s.lid?0:1;e.target.textContent=s.lid?'Close lid':'Open lid';log('Lid '+(s.lid?'opened':'closed'),'warn');render()};
+$('on').onchange=e=>run(async()=>{S.seal.online=e.target.checked?1:0;if(S.seal.online)await S.seal.flush();log('Seal '+(S.seal.online?'online, queue synced':'offline, batches queue'));await render()});
+$('sp1').onchange=e=>{S.seal.s.spoof=e.target.checked?1:0;render()};
+const done=()=>S.C.hand.length>=3&&($('hmsg').textContent='All three handoffs are already signed. Press Reset for a new shipment, then try again.',true);
+$('h1').onclick=()=>run(async()=>{if(done())return;$('hmsg').textContent=(await rev(()=>handoff('both')))||'Handoff committed with both signatures.';await render()});
+$('h2').onclick=()=>run(async()=>{if(done())return;$('hmsg').textContent='Contract says: '+await rev(()=>handoff('single'));await render()});
+$('h3').onclick=()=>run(async()=>{if(done())return;log('Receiver refused to sign','warn');$('hmsg').textContent='Receiver refused: custody stays with the sender. Contract says: '+await rev(()=>handoff('single'));await render()});
+for(const k of['lo','hi','limit','shock','off'])$('c_'+k).onchange=e=>S.cfg[k]=+e.target.value;$('c_red').onchange=e=>S.cfg.red=e.target.checked?1:0;
+$('bTest').onclick=()=>{setRun(false);run(async()=>{let h='<table><tr><th>Scenario<th>Expected<th>Result</tr>',ok=0;for(const a of ATT){const r=await runAttack(a);ok+=r.pass;h+=`<tr><td>${a.n}<td>${a.exp}<td class="${r.pass?'ok':'bad'}">${r.pass?'PASS':'FAIL'} ${r.x.revert||r.v.verdict}</tr>`}$('acard').innerHTML=`<div class="card"><b>Self-test: ${ok}/${ATT.length} passed</b>${h}</table></div>`;await reset();await render()})};
+$('bDemo').onclick=async()=>{if(demoOn){demoOn=false;return}
+ demoOn=true;setRun(false);$('bDemo').textContent='Stop demo';
+ for(const i of[0,14,1,6,8,9,7]){if(!demoOn)break;const a=ATT[i];cap('Demo: '+a.n+' — '+a.w);
+  await run(async()=>{const r=await runAttack(a);card(r);await render(1)});
+  for(let t=0;t<45&&demoOn;t++)await new Promise(f=>setTimeout(f,100))}
+ cap(demoOn?'Demo finished. Use the controls to explore.':'Demo stopped.');demoOn=false;$('bDemo').textContent='Guided demo'};
+$('bExp').onclick=()=>{const c=S.C,v=S.last,j=JSON.stringify({simulation:true,seal:S.id,pubkey:S.seal.se.pub,verdict:v,batches:c.batches,tamperEvents:c.tamper,handoffs:c.hand,chainTip:S.L.healthy()?.chain.at(-1)?.hash,offChainRecords:S.store.records},null,1),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download='audit-report.json';a.click()};
+const CS={T:[5,5,5,5,6,11,13,5,5,5,5,5],on:false,
+ D:['The seal starts logging at 5°C.','The manufacturer and the transporter both sign the handoff.','Temperature rises above the normal range.','Merkle roots are stored on the simulated shared ledger.','The transporter rewrites 13°C to 5°C and 11°C to 5°C in their own copy.','The destination recomputes everything with the existing verifier.']};
+const wait=ms=>new Promise(f=>setTimeout(f,ms));
+function csChart(real,edited,mode){const W=520,H=222,l=38,r=14,t=18,b=34,slots=12,th=(S&&S.cfg)||{lo:2,hi:8},
+ x=i=>l+(W-l-r)*i/(slots-1),y=v=>t+(H-t-b)*(1-v/16),pts=a=>a.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+ let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperature readings across the shipment against the ${th.lo} to ${th.hi} degree range">`;
+ s+=`<rect class="band" x="${l}" y="${y(th.hi)}" width="${W-l-r}" height="${y(th.lo)-y(th.hi)}"/>`;
+ for(const v of[0,4,8,12,16])s+=`<line class="grid" x1="${l}" x2="${W-r}" y1="${y(v)}" y2="${y(v)}"/><text x="${l-6}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+ s+=`<text x="${W-r-4}" y="${y(th.hi)-4}" text-anchor="end" style="fill:var(--cold)">allowed ${th.lo}–${th.hi}°C</text>`;
+ if(real.length>1)s+=`<polyline class="real" points="${pts(real)}"/>`;
+ const ch=edited&&edited.some((v,i)=>v!==real[i]);if(ch)s+=`<polyline class="edit" points="${pts(edited)}"/>`;
+ real.forEach((v,i)=>{const o=v<th.lo||v>th.hi;s+=`<circle class="pt${o?' out':''}" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${o?4.5:3}"/>`;if(o)s+=`<text x="${x(i).toFixed(1)}" y="${(y(v)-9).toFixed(1)}" text-anchor="middle" style="fill:var(--bad);font-weight:700">${v}°C</text>`});
+ s+=`<text x="${l}" y="${H-8}">record 1</text><text x="${W-r}" y="${H-8}" text-anchor="end">record ${slots}, one every 5 simulated minutes</text></svg>`;
+ $('csChart').innerHTML=s;
+ $('csLeg').innerHTML=mode==='plan'?'<span class="lg"></span>Sequence used by the demo (illustrative, not measured)':'<span class="lg"></span>As recorded and signed by the seal'+(ch?'<span class="lg ed"></span>The transporter\'s edited copy':'')}
+function csTable(rows,plan){$('csTab').innerHTML=rows.map(([a,b])=>`<tr><td class="re">${a}°C<td>→<td class="ed">${b}°C</tr>`).join('')+(plan?'<tr><td colspan="3" class="m" style="font-size:12px">planned for this demo</tr>':'')}
+function csMark(i,st,txt){const li=$('cs'+i);li.className=st;li.querySelector('.dyn').innerHTML=txt==null?CS.D[i]:txt}
+function csLight(ids){for(let k=0;k<7;k++)$('pl'+k).classList.toggle('on',ids.includes(k))}
+async function csResult(v,h){const st=n=>v.steps.find(q=>q.n.startsWith(n)),au=await S.L.audit(),ledger=st('1 ')?.ok===true&&au.every(a=>a.up&&!a.diverge),
+ row=(ok,name,txt)=>`<div class="rl ${ok?'ok':'bad'}"><b class="tag">${ok?'pass':'FAIL'}</b> <b>${name}</b> <span class="m">${txt}</span></div>`,
+ m=st('4c'),c=S.C,R=S.store.records;
+ $('csRes').className='';$('csRes').innerHTML=`<b>What the verifier found</b>`+
+ row(st('3 ')?.ok===true,'Hash chain','consistent. The transporter recomputed every hash after editing, so this check alone cannot expose the change.')+
+ row(m?.ok===true,'Merkle root',m?.ok===true?'matches the on-chain root':'MISMATCH. '+m.d+' against roots anchored before the edit.')+
+ row(st('5 ')?.ok===true,'Digital signature','batch signatures match the registered secure-element key')+
+ row(ledger,'Shared ledger proof',ledger?'anchors intact, all four validator copies agree':'ledger copies disagree or anchors missing')+
+ `<div style="margin:6px 0 0"><span class="verdict ${v.verdict}">${v.verdict}</span></div>`+
+ v.reasons.map(q=>`<div><code>${q.code}</code> ${q.msg}</div>`).join('')+
+ (h&&h.verdict!=='ACCEPT'&&v.verdict==='REJECT'?`<p style="margin:10px 0 0">Before the edit, the same shipment scored <b class="${h.verdict}">${h.verdict}</b> (${h.codes.join(', ')}): a short excursion, so the goods are inspected. Hiding it did not earn an ACCEPT, it turned an inspection into a rejection.</p>`:'')+
+ `<p style="margin:10px 0 0"><b>The system does not prevent the transporter from editing their off-chain copy. It detects that the edited records no longer reproduce the cryptographic evidence previously anchored on the shared ledger.</b></p>`+
+ `<div class="m" style="margin-top:6px;font-size:12.5px">Measured in this run: ${R.length} records, ${c.batches.length} batches anchored, verified in ${v.ms.toFixed(0)} ms.</div>`}
+async function csRun(){if(CS.on)return;CS.on=true;demoOn=false;setRun(false);$('csGo').disabled=true;
+ $('csRes').className='m';$('csRes').textContent='Running…';for(let i=0;i<6;i++)csMark(i,'');csLight([]);csChart(CS.T,null,'plan');csTable([[13,5],[11,5]],1);
+ const T=CS.T,live=()=>csChart(S.store.records.map(q=>q.t1),null,'live'),tick=async i=>{S.seal.s.temp=T[i];$('s1').value=T[i];await S.seal.tick()};
+ const step=async(i,lit,f)=>{csMark(i,'act');csLight(lit);let cap;await run(async()=>{cap=await f();await render()});csMark(i,'done',cap);await wait(1400)};let hon=null;
+ try{
+  await step(0,[0,1],async()=>{await reset();$('acard').innerHTML='';$('ver').textContent='Press "Arrive and verify".';for(let i=0;i<4;i++)await tick(i);live();return `Seal logging at 5°C. Records 1 to 4 are hash-chained, and batch 1 is signed and anchored (root ${sh(S.C.batches[0]?.p.root)}).`});
+  await step(1,[4],async()=>{await handoff();return 'Manufacturer → Transporter: both parties signed, and the contract accepted the handoff.'});
+  await step(2,[0,1],async()=>{for(let i=4;i<7;i++)await tick(i);live();return `Temperature climbs to 13°C, outside the ${S.cfg.lo}–${S.cfg.hi}°C range. The seal's LED turns amber.`});
+  await step(3,[2,3,4],async()=>{await tick(7);await handoff();for(let i=8;i<12;i++)await tick(i);await handoff();live();hon=await verify();return `${S.C.batches.length} batches signed by the secure element and anchored. Batch 2 root ${sh(S.C.batches[1]?.p.root)} is now on the ledger, and the shipment reaches the store with every handoff dual-signed.`});
+  await step(4,[],async()=>{const R=S.store.records,ix=CS.T.map((q,i)=>q>8?i:-1).filter(i=>i>=0),real=R.map(q=>q.t1),rows=ix.map(i=>[real[i],5]).sort((a,b)=>b[0]-a[0]);
+   for(const i of ix){await rehash(i,q=>{q.t1=5;q.t2=5});log('Transporter edited record '+R[i].seq+' and re-hashed chain','warn')}
+   csChart(real,R.map(q=>q.t1),'live');csTable(rows);return `Records ${ix.map(i=>R[i].seq).join(' and ')} rewritten to 5°C and every later hash recomputed so the chain looks consistent. Only the transporter's copy changed.`});
+  await step(5,[5,6],async()=>{const v=await verify();showVerify(v);await rev(()=>S.C.finalizeVerdict('PHARMACY',v));log('Verdict '+v.verdict+' '+v.codes.join(','),v.verdict==='ACCEPT'?'ok':'bad');await csResult(v,hon);return `Verdict: ${v.verdict}. The panels above now show this run.`});
+ }catch(e){$('csRes').className='bad';$('csRes').textContent='Case study stopped: '+e.message}
+ finally{CS.on=false;$('csGo').disabled=false;$('csGo').textContent='Run India Case Study again'}}
+function jump(id){const el=$(id).closest('section');el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1800)}
+document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=e=>{e.preventDefault();jump(a.dataset.jump)});
+$('bIndia').onclick=()=>$('india').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+$('csGo').onclick=csRun;for(let i=0;i<6;i++)csMark(i,'');csChart(CS.T,null,'plan');csTable([[13,5],[11,5]],1);
+(function(){const calm=matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',go=id=>{const e=document.getElementById(id);e&&e.scrollIntoView({behavior:calm,block:'center'})};
+ document.querySelectorAll('#guide [data-go]').forEach(b=>b.onclick=()=>{const k=b.dataset.go;
+  if(k==='cheat'){const a=[...document.querySelectorAll('#atk button')].find(x=>/^1 Edit/.test(x.textContent));if(a){a.click();go('acard')}return}
+  const t=document.getElementById(k);if(t){t.click();go(k==='bArr'?'ver':'cap')}})})();
+(async()=>{initBom();initAtk();await run(async()=>{await normal({});S.seal.s.temp=5;await render()});setRun(true)})();
+</script>
+<script>
+(function () {
+"use strict";
+const q = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const cut = (h, n = 10) => h ? esc(String(h).slice(0, n)) + "…" : "—";
+const hx = h => h ? `<code title="${esc(h)}" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.title)">${cut(h)}</code>` : "—";
+const TABS = ["Hardware", "Records", "Cryptographic evidence", "Custody", "Blockchain", "Attacks", "Destination verifier", "India case study"];
+const LV = { mode: "sim", tab: 0, ship: null, batch: null, timer: null, last: "", busy: false, msg: {} };
+const D = {};
+let indiaHome = null;
+
+const base = () => q("lvUrl").value.replace(/\/+$/, "");
+async function api(path, o = {}) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), o.timeout || 9000);
+  try {
+    const r = await fetch(base() + path, { method: o.method || "GET", signal: ctl.signal,
+      headers: { "Content-Type": "application/json", "X-API-Key": q("lvKey").value }, body: o.body ? JSON.stringify(o.body) : undefined });
+    const json = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, json };
+  } catch (e) {
+    return { ok: false, status: 0, json: { error: { code: "UNREACHABLE", message: String((e && e.message) || e) } } };
+  } finally { clearTimeout(t); }
+}
+const errOf = r => (r && r.json && r.json.error) || { code: "ERROR", message: "request failed" };
+const errBox = (r, what) => `<div class="err"><b>${esc(what)}:</b> ${esc(errOf(r).code)}: ${esc(errOf(r).message)}</div>`;
+const ship = () => (D.ships || []).find(s => s.shipmentId === LV.ship);
+const enc = () => encodeURIComponent(LV.ship || "");
+
+const LOAD = {
+  rec: async () => D.rec = await api(`/api/records?shipmentId=${enc()}&limit=1000`),
+  queue: async () => D.queue = await api("/api/queue"),
+  batches: async () => { D.batches = await api(`/api/batches?shipmentId=${enc()}`);
+    const list = (D.batches.json && D.batches.json.batches) || [];
+    if (list.length) { const id = list.some(b => b.batchId === LV.batch) ? LV.batch : list[list.length - 1].batchId; LV.batch = id;
+      D.batchDetail = await api(`/api/batches/${id}?shipmentId=${enc()}`); } else D.batchDetail = null; },
+  verify: async () => D.verify = await api(`/api/verify-chain?shipmentId=${enc()}`),
+  tamper: async () => D.tamper = await api(`/api/tamper-events?shipmentId=${enc()}`),
+  custody: async () => D.custody = await api(`/api/custody?shipmentId=${enc()}`),
+  bcStatus: async () => D.bcStatus = await api("/api/blockchain/status", { timeout: 15000 }),
+  blocks: async () => D.blocks = await api("/api/blockchain/blocks?limit=8"),
+  bcShip: async () => D.bcShip = await api(`/api/blockchain/shipments/${enc()}`),
+  bcBatches: async () => D.bcBatches = await api(`/api/blockchain/batches/${enc()}`),
+  vres: async () => D.vres = await api(`/api/verifier/result?shipmentId=${enc()}`),
+  attacks: async () => D.attacks = await api("/api/attacks"),
+};
+const NEED = [["rec", "queue"], ["rec"], ["rec", "batches", "verify", "tamper"], ["custody"], ["bcStatus", "blocks", "bcShip", "bcBatches", "queue"], ["attacks"], ["vres", "bcShip"], []];
+
+async function ping() {
+  const r = await api("/api/health", { timeout: 4000 });
+  const c = q("lvConn");
+  c.className = "conn " + (r.ok ? "up" : "down");
+  c.textContent = "LIVE BACKEND: " + (r.ok ? "CONNECTED" : "DISCONNECTED");
+  return r.ok;
+}
+
+async function refresh(force) {
+  if (LV.mode !== "live" || LV.busy) return;
+  LV.busy = true;
+  try {
+    if (!(await ping())) { D.offline = true; return draw(true); }
+    D.offline = false;
+    const [st, sh, se] = await Promise.all([api("/api/status"), api("/api/shipments"), api("/api/seals")]);
+    D.status = st.json; D.ships = Array.isArray(sh.json) ? sh.json : []; D.seals = Array.isArray(se.json) ? se.json : [];
+    if (!LV.ship || !ship()) LV.ship = D.ships.length ? D.ships[D.ships.length - 1].shipmentId : null;
+    const sel = q("lvShip");
+    sel.innerHTML = D.ships.map(s => `<option ${s.shipmentId === LV.ship ? "selected" : ""}>${esc(s.shipmentId)}</option>`).join("") || "<option>(none)</option>";
+    if (LV.ship) { for (const k of NEED[LV.tab]) await LOAD[k](); }
+    draw(force);
+  } finally { LV.busy = false; }
+}
+
+const tag = s => `<span class="st ${esc(s)}">${esc(s)}</span>`;
+const when = t => t ? new Date(t * 1000).toISOString().replace("T", " ").slice(0, 19) : "—";
+const noShip = () => '<div class="info">No shipment exists yet. Create one with <code>python integration\\live_demo.py seed</code> (see the README), then press Refresh.</div>';
+
+function tHardware() {
+  const recs = (D.rec && D.rec.json && D.rec.json.records) || [], last = recs[recs.length - 1];
+  const sh = ship(), pol = (sh && sh.policy) || { tempMinC: 2, tempMaxC: 8, shockLimitG: 2.5 };
+  const seal = (D.seals || []).find(s => sh && s.sealId === sh.sealId) || {};
+  const pend = D.queue && D.queue.json ? D.queue.json.pending : "?";
+  const hot = last && (last.temperature1 < pol.tempMinC || last.temperature1 > pol.tempMaxC || last.temperature2 < pol.tempMinC || last.temperature2 > pol.tempMaxC);
+  const red = last && (last.lid || last.shock > pol.shockLimitG || seal.revoked), amber = hot || pend > 0 || !(D.status && D.status.ledger && D.status.ledger.available);
+  const oled = last ? `${seal.sealId || "SEAL"}  rec#${last.seq}\nT1 ${last.temperature1.toFixed(1)}C  T2 ${last.temperature2.toFixed(1)}C\nSHOCK ${last.shock.toFixed(1)}g LID:${last.lid ? "OPEN" : "SHUT"} LIGHT:${last.light ? "ON" : "OFF"}\nCHAIN:${D.status && D.status.ledger && D.status.ledger.available ? "OK" : "DOWN"} Q:${pend}${seal.revoked ? "  REVOKED" : ""}` : "no records yet";
+  return `<div class="two"><div><h4>Smart seal</h4><div class="oled">${esc(oled)}</div>
+<div><span class="led ${!hot && !red ? "g" : ""}"></span><span class="led ${amber ? "a" : ""}"></span><span class="led ${red ? "r" : ""}"></span><span class="m">${red ? "buzzer sounding" : "buzzer quiet"}</span></div>
+<h4>Latest sensor record</h4>${last ? `<div class="kv"><span>record</span><span>#${last.seq}, ${esc(last.timestamp)}</span><span>temperature 1 (primary)</span><span>${last.temperature1.toFixed(2)} °C</span><span>temperature 2 (audit probe)</span><span>${last.temperature2.toFixed(2)} °C</span><span>shock</span><span>${last.shock.toFixed(2)} g</span><span>lid</span><span>${last.lid ? "OPEN" : "closed"}</span><span>light</span><span>${last.light ? "light detected" : "dark"}</span></div>` : '<p class="m">No records received yet.</p>'}</div>
+<div><h4>Secure identity and device status</h4><div class="kv"><span>seal</span><span>${esc(seal.sealId || "—")}</span><span>public key</span><span>${hx(seal.publicKey)}</span>
+<span>key provisioning</span><span>${seal.provisioning === "MOCK_SECURE_ELEMENT" ? "software stand-in for the secure element (not a real ATECC608)" : esc(seal.provisioning || "—")}</span>
+<span>last accepted counter</span><span>${esc(seal.lastCounter ?? "—")}</span><span>revoked</span><span>${seal.revoked ? '<span class="bad">yes</span>' : "no"}</span>
+<span>records stored</span><span>${recs.length}</span><span>batch size</span><span>${esc(D.status && D.status.batchSize)}</span>
+<span>commitments waiting for the ledger</span><span>${esc(pend)}</span><span>ledger</span><span>${D.status && D.status.ledger ? esc(D.status.ledger.mode || "") + (D.status.ledger.available ? " (reachable)" : " (not reachable: commitments queue locally)") : "—"}</span></div>
+<div class="info">Sensor readings come from the Wokwi ESP32 (or the stand-in script). The page shows what the gateway stored; it does not read hardware directly.</div></div></div>`;
+}
+
+function tRecords() {
+  const r = (D.rec && D.rec.json && D.rec.json.records) || [];
+  if (D.rec && !D.rec.ok) return errBox(D.rec, "Records");
+  return `<h4>Raw off-chain records (${r.length}), newest first</h4><div class="scrollx"><table><tr><th>seq<th>timestamp<th>T1 °C<th>T2 °C<th>shock g<th>lid<th>light<th>prevHash<th>hash</tr>` +
+    r.slice(-60).reverse().map(x => `<tr><td>${x.seq}<td>${esc(x.timestamp)}<td>${x.temperature1.toFixed(2)}<td>${x.temperature2.toFixed(2)}<td>${x.shock.toFixed(2)}<td>${x.lid ? "OPEN" : "·"}<td>${x.light ? "ON" : "·"}<td>${hx(x.prevHash)}<td>${hx(x.hash)}</tr>`).join("") + "</table></div>" +
+    '<p class="m">Each record hashes the previous one. Changing any stored value breaks the chain from that point on.</p>';
+}
+
+function tEvidence() {
+  const v = D.verify && D.verify.json, b = (D.batches && D.batches.json && D.batches.json.batches) || [], det = D.batchDetail && D.batchDetail.json, tam = (D.tamper && D.tamper.json && D.tamper.json.events) || [];
+  let h = "<h4>Integrity checks</h4>";
+  h += v && v.checks ? `<p class="m" style="margin:0 0 6px">${esc(v.scope)}</p>` + v.checks.map(c => `<div>${tag(c.status)} ${esc(c.name)} <span class="m">${esc(c.detail)}</span></div>`).join("") : errBox(D.verify, "Integrity check");
+  h += `<h4>Batches (${b.length})</h4><div class="scrollx"><table><tr><th>batch<th>seq range<th>count<th>Merkle root<th>prevRoot<th>counter<th>signature<th>ledger</tr>` +
+    b.map(x => `<tr><td>${x.batchId}<td>${x.firstSeq}–${x.lastSeq}<td>${x.count}<td>${hx(x.root)}<td>${hx(x.prevRoot)}<td>${x.counter}<td>${hx(x.signature)}<td>${tag(x.anchorStatus)} ${hx(x.anchorTx)}</tr>`).join("") + "</table></div>";
+  h += `<p class="m">Counters in use: ${esc([...b.map(x => x.counter), ...tam.map(t => t.counter)].sort((a, c) => a - c).join(", ") || "none")}. They must be contiguous; a hole means something was signed that never reached the ledger.</p>`;
+  if (det && det.merkle) {
+    const lv = det.merkle.levels;
+    h += `<h4>Merkle tree, batch <select id="lvBatchSel">${b.map(x => `<option ${x.batchId === LV.batch ? "selected" : ""}>${x.batchId}</option>`).join("")}</select></h4><div class="tree">` +
+      lv.map((row, i) => `<div class="row">${row.map((n, j) => `<span class="n ${i === lv.length - 1 ? "root" : ""}" title="${esc(n)}">${i === 0 ? "#" + det.records[j].seq + " " : ""}${cut(n, 8)}</span>`).join("")}</div>`).reverse().join("") + "</div>";
+  }
+  h += `<h4>Signed tamper events (${tam.length})</h4>` + (tam.length ? "<table><tr><th>type<th>record<th>counter<th>ledger</tr>" + tam.map(t => `<tr><td>${esc(t.eventType)}<td>${t.seq}<td>${t.counter}<td>${tag(t.anchorStatus)}</tr>`).join("") + "</table>" : '<p class="m">none</p>');
+  return h;
+}
+
+function tCustody() {
+  const c = D.custody && D.custody.json;
+  if (!c || !c.route) return errBox(D.custody, "Custody");
+  const done = c.handoffs.length;
+  let h = `<h4>Route</h4><div class="route">${c.route.map((p, i) => `<span class="party ${i < done ? "done" : ""} ${i === Math.min(done, 3) && !c.complete ? "holder" : ""}">${esc(p)}</span>${i < 3 ? "<span>→</span>" : ""}`).join("")}</div>
+<div class="kv"><span>current holder</span><span>${c.complete ? "PHARMACY (custody complete)" : esc(c.currentCustodianRole)}</span><span>handoffs completed</span><span>${done} of 3</span></div>
+<h4>Dual-signed handoffs</h4>` + (done ? `<div class="scrollx"><table><tr><th>from<th>to<th>nonce<th>at record<th>timestamp<th>sender sig<th>receiver sig<th>ledger</tr>` +
+    c.handoffs.map(x => `<tr><td>${esc(x.fromRole)}<td>${esc(x.toRole)}<td>${hx(x.nonce)}<td>${x.atSeq}<td>${esc(x.timestamp)}<td>${x.sigFrom ? '<span class="st yes">signed</span>' : '<span class="st no">missing</span>'}<td>${x.sigTo ? '<span class="st yes">signed</span>' : '<span class="st no">missing</span>'}<td>${tag(x.anchorStatus)} ${hx(x.anchorTx)}</tr>`).join("") + "</table></div>" : '<p class="m">No handoff yet.</p>');
+  h += `<h4>Try a handoff (demo keys)</h4><p class="m" style="margin:0 0 6px">The gateway signs for the parties with public demo keys so each rejection can be shown. In a real deployment each party signs on its own device.</p>
+<div><button data-h="both">Both parties sign</button> <button data-h="sender_only">Only the sender signs</button> <button data-h="receiver_only">Only the receiver signs</button> <button data-h="reuse_nonce">Reuse an old nonce</button> <button data-h="wrong_receiver_signer">Someone else signs for the receiver</button></div>
+<div class="lvmsg" id="lvCustMsg">${LV.msg.cust || ""}</div><p class="m">A nonce is a one-time value in each handoff. Once used it can never be used again, so an old approval cannot be replayed.</p>`;
+  return h;
+}
+
+function tBlockchain() {
+  const s = D.bcStatus && D.bcStatus.json, bl = D.blocks && D.blocks.json, sh = D.bcShip && D.bcShip.json, bb = D.bcBatches && D.bcBatches.json, qu = D.queue && D.queue.json;
+  let h = "";
+  if (D.bcStatus && !D.bcStatus.ok) h += errBox(D.bcStatus, "Blockchain status");
+  const qb = s && s.qbft;
+  if (qb) h += `<h4>Validators (measured, not simulated)</h4><div class="scrollx"><table><tr><th>validator<th>JSON-RPC<th>reachable<th>block<th>peers</tr>` +
+    qb.nodes.map(n => `<tr><td>${esc(n.name)}<td>${esc(n.rpc)}<td>${n.reachable ? '<span class="st yes">yes</span>' : '<span class="st no">no</span>'}<td>${esc(n.blockNumber ?? "—")}<td>${esc(n.peerCount ?? "—")}</tr>`).join("") + "</table></div>" +
+    `<div class="${qb.canCommit ? "info" : "err"}"><b>Quorum:</b> ${qb.reachable} of ${qb.validatorCount} validators reachable. QBFT needs ${qb.quorumRequired}. ${qb.canCommit ? "Commits are possible." : "No quorum: new transactions cannot be committed, so commitments wait in the local queue."}<br><span class="m">${esc(qb.note)}</span></div>`;
+  if (s && s.deployment) h += `<div class="kv"><span>chain id</span><span>${esc(s.deployment.chainId)}</span><span>registry</span><span>${hx(s.deployment.contracts.registry)}</span><span>batch anchor</span><span>${hx(s.deployment.contracts.anchor)}</span><span>custody</span><span>${hx(s.deployment.contracts.custody)}</span><span>verdicts</span><span>${hx(s.deployment.contracts.verdict)}</span></div>`;
+  h += "<h4>Latest blocks</h4>";
+  h += bl && bl.blocks ? `<div class="scrollx"><table><tr><th>block<th>time (UTC)<th>proposer<th>commit seals<th>transactions</tr>` +
+    bl.blocks.map(b => `<tr><td>${b.number}<td>${when(b.timestamp)}<td>${hx(b.proposer)}<td>${esc(b.commitSeals ?? "n/a")}<td class="wrapcell">${b.transactions.length ? b.transactions.map(t => `${hx(t.hash, 8)} <span class="m">${esc(t.fromRole || "")}</span>`).join("<br>") : "—"}</tr>`).join("") + "</table></div>" : errBox(D.blocks, "Blocks");
+  h += "<h4>This shipment on-chain</h4>";
+  h += sh && sh.shipment ? `<div class="kv"><span>shipment</span><span>${esc(sh.shipment.shipmentId)} (${sh.shipment.active ? "active" : "closed"})</span><span>seal</span><span>${esc(sh.shipment.sealId)}${sh.seal && sh.seal.revoked ? ' <b class="bad">REVOKED</b>' : ""}</span><span>policy hash</span><span>${hx(sh.shipment.policyHash)}</span><span>anchored batches</span><span>${sh.batchCount}</span><span>tamper events</span><span>${sh.tamperCount}</span><span>custody handoffs</span><span>${sh.handoffCount}</span><span>last counter</span><span>${sh.lastCounter}</span><span>final verdict</span><span>${sh.verdict ? `<b>${esc(sh.verdict.verdict)}</b> ${esc(sh.verdict.reasonCodes.join(", "))}` : "not finalized yet"}</span></div>` : errBox(D.bcShip, "Shipment on-chain");
+  if (bb && bb.batches) h += `<h4>Batch anchors on the ledger</h4><div class="scrollx"><table><tr><th>batch<th>records<th>Merkle root<th>counter<th>anchored at (UTC)</tr>` + bb.batches.map(b => `<tr><td>${b.batchId}<td>${b.firstSeq}–${b.lastSeq}<td>${hx(b.root)}<td>${b.counter}<td>${when(b.anchoredAt)}</tr>`).join("") + "</table></div>";
+  if (qu) h += `<h4>Commitment queue</h4><p>${qu.pending} waiting for the ledger.</p>` + (qu.items.length ? "<table><tr><th>#<th>kind<th>status<th>attempts<th>reason<th>tx</tr>" + qu.items.slice(0, 8).map(i => `<tr><td>${i.id}<td>${esc(i.kind)}<td>${tag(i.status)}<td>${i.attempts}<td>${esc(i.error_code || "")}<td>${hx(i.tx_hash)}</tr>`).join("") + "</table>" : "");
+  return h;
+}
+
+function tAttacks() {
+  const a = D.attacks && D.attacks.json;
+  if (!a) return errBox(D.attacks, "Attack results");
+  const rep = a.report;
+  let h = `<div><button id="lvAtkRun" ${a.running ? "disabled" : ""}>${a.running ? "Running the 16 scenarios…" : "Run the attack suite"}</button> <span class="m">Each scenario runs on its own fresh in-memory chain and database, so your live data is never touched.</span></div>`;
+  if (a.error) h += `<div class="err">${esc(a.error)}</div>`;
+  if (!rep) return h + '<p class="m">No report yet. Press the button (takes about a minute).</p>';
+  h += `<div class="info"><b>${rep.summary.pass} passed, ${rep.summary.fail} failed, ${rep.summary.skipped} skipped</b> of ${rep.summary.total}. Mode: ${esc(rep.mode)}. Generated ${esc(rep.generatedAt)}.</div>
+<div class="scrollx"><table><tr><th>#<th>attack<th>class<th>expected<th>actual<th>what caught it<th>limitation<th>result</tr>` +
+    rep.results.map(r => { const o = r.observed || {}; const actual = o.skipped ? esc(o.reason) : esc([o.verdict && o.verdict !== "n/a" ? o.verdict : "", (o.codes || []).join(", "), o.revert || o.contract_revert || o.error || ""].filter(Boolean).join("  "));
+      return `<tr><td>${r.id}<td class="wrapcell"><b>${esc(r.name)}</b><br><span class="m">${esc(r.attackerAction)}</span><td>${tag(r.classification)}<td class="wrapcell">${esc(r.expected)}<td class="wrapcell">${actual}<td class="wrapcell">${esc(r.detection)}<td class="wrapcell">${esc(r.limitation)}<td>${tag(r.status)}</tr>`; }).join("") + "</table></div>";
+  h += "<h4>What remains unsolved</h4><table><tr><th>limitation<th>status<th>note</tr>" + rep.limitations.map(l => `<tr><td class="wrapcell">${esc(l.item)}<td>${tag(l.classification)}<td class="wrapcell">${esc(l.note)}</tr>`).join("") + "</table>";
+  return h + `<p class="m">${esc(rep.disclaimer)}</p>`;
+}
+
+function tVerifier() {
+  const v = D.vres && D.vres.json, sh = D.bcShip && D.bcShip.json;
+  let h = `<div><button id="lvVer">Run verification</button> <button id="lvVerFin" title="Also writes the verdict to the blockchain and closes the shipment">Run and finalize on-chain</button> <span class="m">The verifier reads the chain and the raw evidence separately; it does not use the gateway's database.</span></div><div class="lvmsg">${LV.msg.ver || ""}</div>`;
+  if (!v || !v.verdict) return h + `<p class="m">${D.vres && D.vres.status === 404 ? "No verification has been run for this shipment yet." : ""}</p>` + (D.vres && !D.vres.ok && D.vres.status !== 404 ? errBox(D.vres, "Verifier") : "");
+  h += `<div class="verdict ${esc(v.verdict)}">${esc(v.verdict)}</div>`;
+  h += v.codes.length ? "<h4>Reasons</h4>" + v.codes.map((c, i) => `<div><code>${esc(c)}</code> ${esc(v.reasons[i])}</div>`).join("") : '<p class="m">All checks passed: no reasons to list.</p>';
+  h += `<h4>Checks (${v.checks.length})</h4>` + v.checks.map(c => `<div>${tag(c.status)} <span class="m">${c.step}</span> ${esc(c.name)} <span class="m">${esc(c.detail)}</span></div>`).join("");
+  h += `<p class="m">Verified in ${esc(v.elapsedMs)} ms. Report hash ${hx(v.reportHash)}. ${esc(v.policyNote || "")}</p>`;
+  if (v.finalized) h += `<div class="info">Finalization: ${esc(v.finalized.status)} ${v.finalized.txHash ? hx(v.finalized.txHash) : esc(v.finalized.error || "")}</div>`;
+  if (sh && sh.verdict) h += `<div class="info"><b>On-chain verdict:</b> ${esc(sh.verdict.verdict)} ${esc(sh.verdict.reasonCodes.join(", "))} (issued by ${esc(sh.verdict.verifierRole || "—")})</div>`;
+  return h;
+}
+
+const RENDER = [tHardware, tRecords, tEvidence, tCustody, tBlockchain, tAttacks, tVerifier, null];
+
+function draw(force) {
+  const body = q("lvBody"), ind = q("lvIndia");
+  q("lvTabs").querySelectorAll("button").forEach((b, i) => { b.className = i === LV.tab ? "on" : ""; b.setAttribute("aria-selected", i === LV.tab); });
+  if (LV.tab === 7) { body.hidden = true; ind.hidden = false; mountIndia(); return; }
+  unmountIndia(); body.hidden = false; ind.hidden = true;
+  if (D.offline) {
+    body.innerHTML = `<div class="err"><b>Live backend is not reachable at ${esc(base())}.</b> Start it with <code>demo.bat</code> (real Besu network) or <code>python integration\\serve_stack.py</code> (no Docker), then press Refresh. Simulation mode still works.</div>`;
+    return;
+  }
+  if (!LV.ship && LV.tab !== 4 && LV.tab !== 5) { body.innerHTML = noShip(); return; }
+  const html = RENDER[LV.tab]();
+  const sig = LV.tab + "|" + html;
+  if (!force && sig === LV.last) return;
+  LV.last = sig; body.innerHTML = html; wire();
+}
+
+function mountIndia() { const n = q("india"); if (n && n.parentNode !== q("lvIndia")) { indiaHome = { p: n.parentNode, n: n.nextSibling }; q("lvIndia").appendChild(n); } }
+function unmountIndia() { const n = q("india"); if (n && indiaHome && n.parentNode === q("lvIndia")) { indiaHome.p.insertBefore(n, indiaHome.n); } }
+
+function wire() {
+  const body = q("lvBody");
+  body.querySelectorAll("[data-h]").forEach(b => b.onclick = async () => {
+    const stage = (D.custody.json.handoffs || []).length, route = D.custody.json.route;
+    if (stage >= 3 && b.dataset.h !== "reuse_nonce") { LV.msg.cust = '<span class="bad">ROUTE_COMPLETE: custody already reached the pharmacy.</span>'; return refresh(true); }
+    const r = await api("/api/custody/demo-handoff", { method: "POST", body: { shipmentId: LV.ship, fromRole: route[Math.min(stage, 2)], toRole: route[Math.min(stage, 2) + 1], mode: b.dataset.h } });
+    LV.msg.cust = r.ok ? '<span class="ok">Accepted: both signatures verified and queued for the ledger.</span>' : `<span class="bad">Rejected: <b>${esc(errOf(r).code)}</b> ${esc(errOf(r).message)}</span>`;
+    refresh(true);
+  });
+  const sel = q("lvBatchSel"); if (sel) sel.onchange = () => { LV.batch = +sel.value; refresh(true); };
+  const run = q("lvAtkRun"); if (run) run.onclick = async () => { const r = await api("/api/attacks/run", { method: "POST" }); if (!r.ok) alert(errOf(r).code + ": " + errOf(r).message); refresh(true); };
+  const go = async fin => { LV.msg.ver = "Running the 25 checks…"; draw(true); const r = await api(`/api/verifier/run?shipmentId=${enc()}&finalize=${fin}`, { method: "POST", timeout: 120000 });
+    LV.msg.ver = r.ok ? "" : `<span class="bad">${esc(errOf(r).code)}: ${esc(errOf(r).message)}</span>`; refresh(true); };
+  if (q("lvVer")) q("lvVer").onclick = () => go(false);
+  if (q("lvVerFin")) q("lvVerFin").onclick = () => go(true);
+}
+
+function download(name, text, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+async function exportAudit() {
+  if (!LV.ship) return alert("No shipment selected.");
+  const get = async p => (await api(p)).json;
+  const [bundle, verify, custody, bcShip, bcBatches, bcCustody, valid, vres, att, status] = await Promise.all([
+    get(`/api/export?shipmentId=${enc()}`), get(`/api/verify-chain?shipmentId=${enc()}`), get(`/api/custody?shipmentId=${enc()}`), get(`/api/blockchain/shipments/${enc()}`),
+    get(`/api/blockchain/batches/${enc()}`), get(`/api/blockchain/custody/${enc()}`), get("/api/blockchain/validators"), get(`/api/verifier/result?shipmentId=${enc()}`), get("/api/attacks"), get("/api/status")]);
+  const b = bundle.bundle || {};
+  const report = {
+    project: "Tamper-evident smart seal for multi-party custody of critical goods", generatedAt: new Date().toISOString(), gateway: base(),
+    sealId: b.seal && b.seal.sealId, shipmentId: LV.ship, records: b.records, hashChainStatus: verify.checks, batches: b.batches,
+    merkleRoots: (b.batches || []).map(x => ({ batchId: x.batchId, root: x.root, prevRoot: x.prevRoot })),
+    signatures: (b.batches || []).map(x => ({ batchId: x.batchId, signature: x.signature, counter: x.counter })), counters: [...(b.batches || []), ...(b.tamperEvents || [])].map(x => x.counter).sort((x, y) => x - y),
+    custody: custody.handoffs, tamperEvents: b.tamperEvents,
+    blockchainReferences: { contracts: status.chain, shipment: bcShip, batchesOnChain: bcBatches, custodyOnChain: bcCustody, anchorTransactions: (b.batches || []).map(x => ({ batchId: x.batchId, status: x.anchorStatus, tx: x.anchorTx })) },
+    validatorState: valid, verification: vres && vres.checks ? { checks: vres.checks, elapsedMs: vres.elapsedMs, reportHash: vres.reportHash } : "no verifier result yet",
+    verdict: vres && vres.verdict, reasonCodes: vres && vres.codes, policy: b.shipment && b.shipment.policy, policyNote: status.policyDisclaimer,
+    limitations: (att.report && att.report.limitations) || "run the attack suite to include the limitation table", attackSuite: att.report ? att.report.summary : null,
+    honesty: "Tamper-evident and cryptographically verifiable. Not tamper-proof. The mock secure element is a software stand-in; sensors are simulated unless real hardware is attached." };
+  download("audit-report.json", JSON.stringify(report, null, 2), "application/json");
+  const t = (rows, cols) => "<table border=1 cellpadding=4 style='border-collapse:collapse;font-size:12px'><tr>" + cols.map(c => `<th>${esc(c)}`).join("") + "</tr>" + rows.map(r => "<tr>" + cols.map(c => `<td>${esc(r[c] ?? "")}`).join("") + "</tr>").join("") + "</table>";
+  download("audit-report.html", `<!DOCTYPE html><meta charset=utf-8><title>Audit report ${esc(LV.ship)}</title><body style="font:14px Georgia,serif;max-width:980px;margin:24px auto">
+<h1>Audit report: ${esc(LV.ship)}</h1><p>Generated ${esc(report.generatedAt)}. Seal ${esc(report.sealId)}.</p><h2>Verdict: ${esc(report.verdict || "not verified yet")}</h2><p>${esc((report.reasonCodes || []).join(", "))}</p>
+<h3>Verification checks</h3>${vres && vres.checks ? t(vres.checks, ["step", "name", "status", "detail"]) : "<p>none</p>"}
+<h3>Batches</h3>${t(b.batches || [], ["batchId", "firstSeq", "lastSeq", "count", "root", "counter", "anchorStatus", "anchorTx"])}
+<h3>Custody</h3>${t(custody.handoffs || [], ["fromRole", "toRole", "nonce", "atSeq", "anchorStatus"])}
+<h3>Limitations</h3>${Array.isArray(report.limitations) ? t(report.limitations, ["item", "classification", "note"]) : "<p>" + esc(report.limitations) + "</p>"}
+<p><i>${esc(report.honesty)}</i></p></body>`, "text/html");
+}
+
+function setMode(m) {
+  LV.mode = m;
+  q("simRoot").hidden = m === "live"; q("liveRoot").hidden = m !== "live"; q("liveCfg").hidden = m !== "live";
+  q("mSim").className = m === "sim" ? "on" : ""; q("mLive").className = m === "live" ? "on" : "";
+  clearInterval(LV.timer); LV.timer = null;
+  if (m === "live") {
+    try { if (typeof timer !== "undefined" && timer) setRun(false); } catch (e) { }
+    LV.timer = setInterval(() => refresh(false), 4000); refresh(true);
+  } else {
+    unmountIndia();
+    const c = q("lvConn"); c.className = "conn unk"; c.textContent = "LIVE BACKEND: NOT CHECKED";
+    try { if (typeof setRun === "function") setRun(true); } catch (e) { }
+  }
+}
+q("lvTabs").innerHTML = TABS.map((t, i) => `<button role="tab" data-t="${i}">${esc(t)}</button>`).join("");
+q("lvTabs").onclick = e => { const i = e.target.dataset && e.target.dataset.t; if (i != null) { LV.tab = +i; LV.last = ""; draw(true); refresh(true); } };
+q("mSim").onclick = () => setMode("sim"); q("mLive").onclick = () => setMode("live");
+q("lvRefresh").onclick = () => refresh(true); q("lvExport").onclick = exportAudit;
+q("lvShip").onchange = e => { LV.ship = e.target.value; LV.batch = null; refresh(true); };
+q("lvUrl").onchange = () => refresh(true); q("lvKey").onchange = () => refresh(true);
+window.SmartSealLive = { setMode, refresh, state: LV, data: D };
+})();
+</script></body></html>

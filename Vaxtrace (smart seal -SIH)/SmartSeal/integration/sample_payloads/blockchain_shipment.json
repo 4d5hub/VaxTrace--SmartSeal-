@@ -1,0 +1,20 @@
+{
+ "shipment": {
+  "shipmentId": "SHP-001",
+  "active": true,
+  "sealId": "SEAL-A1",
+  "initialCustodian": "0x07B4bD87416951a7B772847408020D0D5202B712",
+  "policyHash": "b271489c2923b91e89c8a616f4acdf272caae24a86da492c716f6c98f8a78e08"
+ },
+ "seal": {
+  "sealId": "SEAL-A1",
+  "revoked": false,
+  "manufacturer": "0x07B4bD87416951a7B772847408020D0D5202B712",
+  "publicKey": "0450248d86d5d8187977ec6e7f9503fbbc4e85cb082ec36c6e6d0db9c00ea5ef16a2679f4a321ed8fc576d3a405c7dc51ea9ca9d5faebb63660cffa4c238f46cd7"
+ },
+ "batchCount": 2,
+ "tamperCount": 0,
+ "handoffCount": 3,
+ "lastCounter": 2,
+ "verdict": null
+}

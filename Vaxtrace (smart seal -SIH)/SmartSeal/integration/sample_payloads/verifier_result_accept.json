@@ -1,0 +1,200 @@
+{
+ "shipmentId": "SHP-001",
+ "verdict": "ACCEPT",
+ "codes": [],
+ "reasons": [],
+ "checks": [
+  {
+   "step": 1,
+   "name": "Fetch on-chain shipment state",
+   "status": "PASS",
+   "detail": "seal SEAL-A1, active",
+   "code": null
+  },
+  {
+   "step": 2,
+   "name": "Fetch on-chain batch anchors",
+   "status": "PASS",
+   "detail": "2 anchored batches",
+   "code": null
+  },
+  {
+   "step": 3,
+   "name": "Fetch on-chain custody chain",
+   "status": "PASS",
+   "detail": "3 handoffs on-chain",
+   "code": null
+  },
+  {
+   "step": 4,
+   "name": "Fetch raw off-chain records",
+   "status": "PASS",
+   "detail": "8 records",
+   "code": null
+  },
+  {
+   "step": 5,
+   "name": "Sequence continuity",
+   "status": "PASS",
+   "detail": "ok",
+   "code": null
+  },
+  {
+   "step": 6,
+   "name": "Timestamps ordered",
+   "status": "PASS",
+   "detail": "ok",
+   "code": null
+  },
+  {
+   "step": 7,
+   "name": "Recompute every record hash",
+   "status": "PASS",
+   "detail": "ok",
+   "code": null
+  },
+  {
+   "step": 8,
+   "name": "Previous-hash links",
+   "status": "PASS",
+   "detail": "ok",
+   "code": null
+  },
+  {
+   "step": 9,
+   "name": "Batch record counts and coverage",
+   "status": "PASS",
+   "detail": "every anchored batch is fully present",
+   "code": null
+  },
+  {
+   "step": 10,
+   "name": "Recompute each Merkle root",
+   "status": "PASS",
+   "detail": "2 roots recomputed",
+   "code": null
+  },
+  {
+   "step": 11,
+   "name": "Compare Merkle roots with on-chain roots",
+   "status": "PASS",
+   "detail": "all roots match",
+   "code": null
+  },
+  {
+   "step": 12,
+   "name": "Verify batch signatures",
+   "status": "PASS",
+   "detail": "2 signatures verified",
+   "code": null
+  },
+  {
+   "step": 13,
+   "name": "Monotonic counters",
+   "status": "PASS",
+   "detail": "counters [1, 2]",
+   "code": null
+  },
+  {
+   "step": 14,
+   "name": "Batch order",
+   "status": "PASS",
+   "detail": "consecutive",
+   "code": null
+  },
+  {
+   "step": 15,
+   "name": "Previous-root chaining",
+   "status": "PASS",
+   "detail": "every prevRoot links to the previous root",
+   "code": null
+  },
+  {
+   "step": 16,
+   "name": "Seal registration",
+   "status": "PASS",
+   "detail": "registered by 0x07B4bD87416951a7B772847408020D0D5202B712",
+   "code": null
+  },
+  {
+   "step": 17,
+   "name": "Seal revocation status",
+   "status": "PASS",
+   "detail": "not revoked",
+   "code": null
+  },
+  {
+   "step": 18,
+   "name": "Custody chain",
+   "status": "PASS",
+   "detail": "Manufacturer > Transporter > Warehouse > Pharmacy complete",
+   "code": null
+  },
+  {
+   "step": 19,
+   "name": "Dual custody signatures",
+   "status": "PASS",
+   "detail": "6 signatures recovered to the expected parties",
+   "code": null
+  },
+  {
+   "step": 20,
+   "name": "Temperature policy",
+   "status": "PASS",
+   "detail": "all readings within 2.0-8.0 C",
+   "code": null
+  },
+  {
+   "step": 21,
+   "name": "Tamper events",
+   "status": "PASS",
+   "detail": "0 signed tamper events, all explained",
+   "code": null
+  },
+  {
+   "step": 22,
+   "name": "Shock policy",
+   "status": "PASS",
+   "detail": "within limit",
+   "code": null
+  },
+  {
+   "step": 23,
+   "name": "Sensor disagreement",
+   "status": "PASS",
+   "detail": "probes agree",
+   "code": null
+  },
+  {
+   "step": 24,
+   "name": "Offline and logging gaps",
+   "status": "PASS",
+   "detail": "no gap longer than 20 min",
+   "code": null
+  },
+  {
+   "step": 25,
+   "name": "Produce verdict",
+   "status": "PASS",
+   "detail": "ACCEPT",
+   "code": null
+  }
+ ],
+ "elapsedMs": 185.0,
+ "policyNote": "Demo policy values, not medical or regulatory certification.",
+ "policy": {
+  "maxExcursionMinutes": 15,
+  "offlineGapMinutes": 20,
+  "probeDisagreementC": 3.0,
+  "shockLimitG": 2.5,
+  "tempMaxC": 8.0,
+  "tempMinC": 2.0
+ },
+ "options": {
+  "excursionProbeRule": "primary",
+  "handoffToleranceRecords": 1,
+  "unauthorizedLidOpenVerdict": "QUARANTINE",
+  "defaultSamplingSeconds": 300
+ },
+ "reportHash": "0x21d7754a79ed4a09aa8ac6af0c25803e9deeeb8a6141b05bd8eb379d5490f03f"
+}

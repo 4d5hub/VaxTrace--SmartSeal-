@@ -1,0 +1,7 @@
+{
+ "error": {
+  "code": "NEED_BOTH_SIGNATURES",
+  "message": "a custody transfer needs the sender AND the receiver signature",
+  "details": null
+ }
+}

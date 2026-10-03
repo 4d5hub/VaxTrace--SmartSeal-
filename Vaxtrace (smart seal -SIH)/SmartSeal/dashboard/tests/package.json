@@ -1,0 +1,1 @@
+{ "name": "smartseal-dashboard-smoke", "private": true, "scripts": { "test": "node smoke.test.js" }, "devDependencies": { "jsdom": "^26.0.0" } }

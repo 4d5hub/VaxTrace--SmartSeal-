@@ -1,0 +1,19 @@
+{
+ "shipmentId": "SHP-001",
+ "verdict": "REJECT",
+ "codes": [
+  "MERKLE_MISMATCH"
+ ],
+ "reasons": [
+  "Recomputed Merkle root differs from the root anchored on-chain."
+ ],
+ "checks_failed": [
+  {
+   "step": 11,
+   "name": "Compare Merkle roots with on-chain roots",
+   "status": "FAIL",
+   "detail": "batch 1: recomputed f3f41f77496a... vs on-chain 14802bfa6f20...; batch 2: recomputed 9531ed27bc60... vs on-chain ec86c0eda987...",
+   "code": "MERKLE_MISMATCH"
+  }
+ ]
+}

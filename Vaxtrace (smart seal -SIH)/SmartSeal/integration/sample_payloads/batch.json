@@ -1,0 +1,15 @@
+{
+ "sealId": "SEAL-A1",
+ "shipmentId": "SHP-001",
+ "batchId": 1,
+ "firstSeq": 1,
+ "lastSeq": 4,
+ "count": 4,
+ "prevRoot": "0000000000000000000000000000000000000000000000000000000000000000",
+ "root": "14802bfa6f20b085477e055311b0583750de1c1579574e858b1ccabaeea733d7",
+ "timestamp": "2026-10-01T07:44:10Z",
+ "counter": 1,
+ "signature": "39f6d36263a55d7c97b131bf81b927b62b9a2243229ecdd6476ec1422649db2cdcd6b888e2510a986c201655c435a0a20aa4a599ef278e24b38aa7284572ce10",
+ "anchorStatus": "ANCHORED",
+ "anchorTx": "0x0d6e796921c412eb3fff0ca8fdaba4487e62a56bc43db728d0ef6b897fd3b79b"
+}

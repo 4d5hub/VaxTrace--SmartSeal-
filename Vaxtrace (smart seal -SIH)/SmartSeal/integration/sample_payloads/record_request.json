@@ -1,0 +1,13 @@
+{
+ "sealId": "SEAL-A1",
+ "shipmentId": "SHP-001",
+ "seq": 5,
+ "timestamp": "2026-01-01T00:25:00Z",
+ "temperature1": 5.2,
+ "temperature2": 5.3,
+ "shock": 0.2,
+ "lid": false,
+ "light": false,
+ "prevHash": "47b43d6110770d4cc8f6671c52b2fbe8e98db4efc7466b1b61215433bc843db2",
+ "hash": "e8ec1de96d036b9d0bf21a82fccffd7718d32f6f5b728b3414b700f01d553062"
+}

@@ -1,0 +1,9 @@
+{
+  "_disclaimer": "DEMO POLICY values chosen for this prototype. They are NOT universal vaccine safety limits and NOT a regulatory or medical certification. Edit per shipment.",
+  "verifierOptions": {
+    "excursionProbeRule": "primary",
+    "handoffToleranceRecords": 1,
+    "unauthorizedLidOpenVerdict": "QUARANTINE",
+    "defaultSamplingSeconds": 300
+  }
+}

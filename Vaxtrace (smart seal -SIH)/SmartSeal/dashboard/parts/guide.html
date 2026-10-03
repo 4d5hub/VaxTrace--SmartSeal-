@@ -1,0 +1,37 @@
+<section class="p" id="guide"><details open><summary>New here? Read this first (1 minute)</summary>
+<div class="gbody">
+<div>
+<h4>What is this?</h4>
+<p>A <b>smart seal</b> travels with a vaccine shipment and records temperature, shocks and whether the box was opened. Each record is locked to the one before it, and a compact fingerprint of every batch is saved on a ledger shared by four organisations (manufacturer, transporter, pharmacy, regulator). At the destination, an independent check re-reads everything and decides <b>ACCEPT</b>, <b>QUARANTINE</b> or <b>REJECT</b>.</p>
+<p>The point: if someone later edits the records to hide a problem, the change is <b>detected</b>. This simulator lets you play the honest shipment and the dishonest transporter.</p>
+<div class="grs">
+<div><b style="color:var(--ok)">Real, running in your browser</b>SHA-256 hashes, ECDSA P-256 signatures, Merkle trees, hash chains, contract rules and the verifier logic.</div>
+<div class="gs"><b style="color:var(--warn)">Simulated stand-ins here</b>Sensors (sliders), the secure-element chip, the 4-node ledger and the network.</div>
+<div class="gb2"><b style="color:var(--cold)">Real backend mode (top bar)</b>The same story against a running FastAPI gateway, Solidity contracts and a separate verifier service. Needs the backend running; the simulation works without it.</div>
+</div>
+</div>
+<div>
+<h4>Try it in 4 steps</h4>
+<div class="gsteps">
+<div class="gstep"><i>Step 1</i><strong>Run a normal shipment</strong><span>The seal logs readings in range and three handoffs are signed by both sides.</span><button type="button" data-go="bNorm">Run normal shipment</button></div>
+<div class="gstep"><i>Step 2</i><strong>Arrive and verify</strong><span>The destination re-checks everything on its own. Expect <b>ACCEPT</b>.</span><button type="button" data-go="bArr">Arrive and verify</button></div>
+<div class="gstep"><i>Step 3</i><strong>Now cheat</strong><span>The transporter edits out a hot reading. The check expects <b>REJECT</b>.</span><button type="button" data-go="cheat">Edit a record, then verify</button></div>
+<div class="gstep"><i>Step 4</i><strong>Or sit back</strong><span>A guided demo runs several attacks in turn and explains each one.</span><button type="button" data-go="bDemo">Start guided demo</button></div>
+</div>
+</div>
+</div>
+<div class="gkey">
+<div style="border-left-color:var(--ok)"><b style="color:var(--ok)">ACCEPT</b>All checks passed. Records are intact and match the ledger.</div>
+<div style="border-left-color:var(--warn)"><b style="color:var(--warn)">QUARANTINE</b>Not proven bad, but needs a human look (for example a short excursion or moderate shock).</div>
+<div style="border-left-color:var(--bad)"><b style="color:var(--bad)">REJECT</b>Evidence failed a cryptographic check or a serious limit. Do not use.</div>
+</div>
+<details><summary style="font-size:14px">Plain-English glossary</summary><dl>
+<dt>Hash chain</dt><dd>Each record includes the fingerprint of the previous one, so changing, deleting or reordering a record breaks the chain.</dd>
+<dt>Merkle root</dt><dd>One fingerprint for a whole batch of records. Change any record and the root no longer matches.</dd>
+<dt>Digital signature</dt><dd>Proof that a specific key (the seal's, or a party's) approved something. Forging one needs that key.</dd>
+<dt>Ledger</dt><dd>A record book kept by four independent organisations. New entries need at least 3 of 4 to agree.</dd>
+<dt>Custody handoff</dt><dd>Responsibility passes from one party to the next only when both the sender and the receiver sign.</dd>
+<dt>Counter</dt><dd>A number that only goes up. It stops an old signed message from being replayed as new.</dd>
+<dt>Off-chain records</dt><dd>The full raw readings, kept outside the ledger. Only their fingerprints go on it.</dd>
+</dl><p class="m" style="margin:4px 0 0;font-size:12.5px">Limits used here (2–8°C, 15-minute excursion, 2.5 g shock) are demonstration values, not medical or regulatory thresholds. The system detects inconsistent evidence; it cannot prove a sensor was physically truthful.</p></details>
+</details></section>

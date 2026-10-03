@@ -1,0 +1,460 @@
+{
+ "contractName": "SmartSealRegistry",
+ "source": "SmartSealRegistry.sol",
+ "abi": [
+  {
+   "inputs": [],
+   "stateMutability": "nonpayable",
+   "type": "constructor"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "module",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "bool",
+     "name": "allowed",
+     "type": "bool"
+    }
+   ],
+   "name": "ModuleSet",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    }
+   ],
+   "name": "ParticipantRevoked",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "enum SmartSealRegistry.Role",
+     "name": "role",
+     "type": "uint8"
+    }
+   ],
+   "name": "RoleSet",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": false,
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "manufacturer",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "uint256",
+     "name": "pubX",
+     "type": "uint256"
+    },
+    {
+     "indexed": false,
+     "internalType": "uint256",
+     "name": "pubY",
+     "type": "uint256"
+    }
+   ],
+   "name": "SealRegistered",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": false,
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "by",
+     "type": "address"
+    }
+   ],
+   "name": "SealRevoked",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": false,
+     "internalType": "string",
+     "name": "shipmentId",
+     "type": "string"
+    }
+   ],
+   "name": "ShipmentClosed",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": false,
+     "internalType": "string",
+     "name": "shipmentId",
+     "type": "string"
+    },
+    {
+     "indexed": false,
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    },
+    {
+     "indexed": false,
+     "internalType": "bytes32",
+     "name": "policyHash",
+     "type": "bytes32"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "initialCustodian",
+     "type": "address"
+    }
+   ],
+   "name": "ShipmentStarted",
+   "type": "event"
+  },
+  {
+   "inputs": [],
+   "name": "admin",
+   "outputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "string",
+     "name": "shipmentId",
+     "type": "string"
+    }
+   ],
+   "name": "closeShipment",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    }
+   ],
+   "name": "getSeal",
+   "outputs": [
+    {
+     "components": [
+      {
+       "internalType": "bool",
+       "name": "exists",
+       "type": "bool"
+      },
+      {
+       "internalType": "bool",
+       "name": "revoked",
+       "type": "bool"
+      },
+      {
+       "internalType": "address",
+       "name": "manufacturer",
+       "type": "address"
+      },
+      {
+       "internalType": "uint256",
+       "name": "pubX",
+       "type": "uint256"
+      },
+      {
+       "internalType": "uint256",
+       "name": "pubY",
+       "type": "uint256"
+      }
+     ],
+     "internalType": "struct SmartSealRegistry.Seal",
+     "name": "",
+     "type": "tuple"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "string",
+     "name": "shipmentId",
+     "type": "string"
+    }
+   ],
+   "name": "getShipment",
+   "outputs": [
+    {
+     "components": [
+      {
+       "internalType": "bool",
+       "name": "exists",
+       "type": "bool"
+      },
+      {
+       "internalType": "bool",
+       "name": "active",
+       "type": "bool"
+      },
+      {
+       "internalType": "string",
+       "name": "sealId",
+       "type": "string"
+      },
+      {
+       "internalType": "address",
+       "name": "initialCustodian",
+       "type": "address"
+      },
+      {
+       "internalType": "bytes32",
+       "name": "policyHash",
+       "type": "bytes32"
+      }
+     ],
+     "internalType": "struct SmartSealRegistry.Shipment",
+     "name": "",
+     "type": "tuple"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "a",
+     "type": "address"
+    }
+   ],
+   "name": "isActiveParticipant",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "name": "isModule",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "name": "participantRevoked",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    },
+    {
+     "internalType": "uint256",
+     "name": "pubX",
+     "type": "uint256"
+    },
+    {
+     "internalType": "uint256",
+     "name": "pubY",
+     "type": "uint256"
+    }
+   ],
+   "name": "registerSeal",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    }
+   ],
+   "name": "revokeParticipant",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    }
+   ],
+   "name": "revokeSeal",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "name": "roleOf",
+   "outputs": [
+    {
+     "internalType": "enum SmartSealRegistry.Role",
+     "name": "",
+     "type": "uint8"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "module",
+     "type": "address"
+    },
+    {
+     "internalType": "bool",
+     "name": "allowed",
+     "type": "bool"
+    }
+   ],
+   "name": "setModule",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    },
+    {
+     "internalType": "enum SmartSealRegistry.Role",
+     "name": "role",
+     "type": "uint8"
+    }
+   ],
+   "name": "setRole",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "string",
+     "name": "shipmentId",
+     "type": "string"
+    },
+    {
+     "internalType": "string",
+     "name": "sealId",
+     "type": "string"
+    },
+    {
+     "internalType": "bytes32",
+     "name": "policyHash",
+     "type": "bytes32"
+    }
+   ],
+   "name": "startShipment",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  }
+ ],
+ "bytecode": "0x60808060405234602757600080546001600160a01b03191633179055611163908161002d8239f35b600080fdfe608080604052600436101561001357600080fd5b60003560e01c90816313c7e21714610dc25750806335bda43b14610d8357806342f6e38914610d445780634d7b899014610b78578063571c3e6014610ae857806357f8f2f314610a7257806378caa341146109045780639d57d94a14610526578063a5d7827e146104e0578063b1662d581461044b578063b408f89a146103c9578063d14924e4146102cd578063da34f3d5146100e75763f851a440146100b957600080fd5b346100e25760003660031901126100e2576000546040516001600160a01b039091168152602090f35b600080fd5b346100e25760203660031901126100e25760043567ffffffffffffffff81116100e25761011a6020913690600401610eae565b91906000608060405161012c81610f05565b8281528285820152606060408201528260608201520152826040519384928337810160058152030190206040519061016382610f05565b805460ff81161515835260ff602084019160081c1615158152600182016040519081600082549261019384610fd7565b80845293600181169081156102ab5750600114610264575b506101be92509593959492940384610f21565b60408201928352600360018060a01b036002830154169160608401928352015492608083019384526040519485936020855251151560208501525115156040840152519260a060608401528351918260c085015260005b83811061024c575060e09450600085848601015260018060a01b0390511660808401525160a0830152601f80199101168101030190f35b602086820181015160e0898401015287955001610215565b90506000929192526020600020906000915b81831061028f5750509060206101be92820101876101ab565b6020919350806001915483858801015201910190918392610276565b9050602092506101be94915060ff191682840152151560051b820101876101ab565b346100e25760203660031901126100e25760043567ffffffffffffffff81116100e2576102fe903690600401610eae565b9033600052600360205261031960ff60406000205416610f43565b60ff604051838382376020818581016005815203019020541615610393577f6b4b2a00ea40e6596608ae3dc2b9b2cbee611bbb0481c03a8252401a9d10ce459160405181838237602081838101600581520301902061ff0019815416905561038e604051928392602084526020840191610f7d565b0390a1005b60405162461bcd60e51b815260206004820152600e60248201526d15d493d391d7d4d212541351539560921b6044820152606490fd5b346100e25760203660031901126100e2576001600160a01b036103ea610edc565b1680600052600160205260ff6040600020541660088110156104355715158061041b575b6020906040519015158152f35b506000526002602052602060ff604060002054161561040e565b634e487b7160e01b600052602160045260246000fd5b346100e25760403660031901126100e257610464610edc565b60243590811515908183036100e2577f96bf850214e832f3d463d74cdf933b2aa73175e078496bd11f5e8afaeb2bbb9c916104d76020926104b060018060a01b03600054163314610f43565b60018060a01b031694856000526003845260406000209060ff801983541691151516179055565b604051908152a2005b346100e25760203660031901126100e2576001600160a01b03610501610edc565b16600052600160205261052260ff6040600020541660405191829182610ef2565b0390f35b346100e25760603660031901126100e25760043567ffffffffffffffff81116100e257610557903690600401610eae565b60243567ffffffffffffffff81116100e257610577903690600401610eae565b6044359361058c61058733611011565b610f43565b60ff60405183858237602081858101600481520301902054818116806108ee575b6105b690610f9e565b60081c166108ba5760ff6040518583823760208187810160058152030190205416610883576040516105e781610f05565b60018152602081016001815267ffffffffffffffff841161086d57604051610619601f8601601f191660200182610f21565b84815236858701116100e2578486602083013760006020868301015260408301908152606083019033825261069460808501938a855261067d6040518b8982376020818d8101600581520301902096511515879060ff801983541691151516179055565b51855461ff00191690151560081b61ff0016178555565b518051600185019167ffffffffffffffff821161086d576106b58354610fd7565b601f8111610817575b50602090601f831160011461078057936107679896938360039461075998947fad8284eb625e0c26db14377354e14015cc3392c660f6f8a921a0588c909138ce9e9d9b98600092610775575b50508160011b9160001990871b1c19161790555b600284019060018060a01b039051166bffffffffffffffffffffffff60a01b8254161790555191015560405195606087526060870191610f7d565b918483036020860152610f7d565b9260408201528033930390a2005b015190508f8061070a565b90601f1983169184600052816000209260005b8181106107ff57508461075998947fad8284eb625e0c26db14377354e14015cc3392c660f6f8a921a0588c909138ce9e9d9b98946107679d9b9894600398600195106107e7575b505050811b01905561071e565b015160001983891b60f8161c191690558f80806107da565b92936020600181928786015181550195019301610793565b828111156106be57836000526020600020601f840160051c9060208510610864575b81601f9101920160051c039060005b8281106108565750506106be565b600082820155600101610848565b60009150610839565b634e487b7160e01b600052604160045260246000fd5b60405162461bcd60e51b815260206004820152600f60248201526e534849504d454e545f45584953545360881b6044820152606490fd5b60405162461bcd60e51b815260206004820152600c60248201526b14d1505317d4915593d2d15160a21b6044820152606490fd5b50601081901c6001600160a01b031633146105ad565b346100e25760203660031901126100e25760043567ffffffffffffffff81116100e257610935903690600401610eae565b906040518282823760208184810160048152030190209081549061095b60ff8316610f9e565b6000338152600160205260ff6040822054166008811015610a5e576005149081610a45575b508015610a1f575b61099190610f43565b60ff8260081c166109e8577fe5675273c35b3efa9fa064fa9d68a23cbce9b3739006dfedb9bc6da75335e26b926101006109e39361ff0019161790556040519182916020835233956020840191610f7d565b0390a2005b60405162461bcd60e51b815260206004820152600f60248201526e1053149150511657d4915593d2d151608a1b6044820152606490fd5b50610a2933611011565b8015610988575033601083901c6001600160a01b031614610988565b60ff915060409033815260026020522054161585610980565b634e487b7160e01b82526021600452602482fd5b346100e25760203660031901126100e257610a8b610edc565b610aa060018060a01b03600054163314610f43565b6001600160a01b03166000818152600260205260408120805460ff191660011790557f99c7a377fb8b2cd15a2586422dad7509ca6265deb92786584730e6c0b10251469080a2005b346100e25760403660031901126100e257610b01610edc565b6024359060088210156100e2576109e37f86ca834ed77043799de2a6c996fa4b79fadfb467b4694e233b20c43aa072821891610b4860018060a01b03600054163314610f43565b60018060a01b031692836000526001602052604060002060ff1981541660ff831617905560405191829182610ef2565b346100e25760603660031901126100e25760043567ffffffffffffffff81116100e257610ba9903690600401610eae565b9060243591604435610bbd61058733611011565b60ff6040518385823760208185810160048152030190205416610d1157610be48185611059565b15610cdb57610cc87ff2c4e8aef7761063f6f1a53ee13b22164942fd2a232e0ed2187d546addafa5ff93604051610c1a81610f05565b60018152600260208201600081526040830133815260608401908a8252610c886080860193898552610c718b60206040518281938d83378101600481520301902097511515889060ff801983541691151516179055565b51865461ff00191690151560081b61ff0016178655565b51845462010000600160b01b03191660109190911b62010000600160b01b0316178455516001840155519101556040516060808252909490850191610f7d565b93602083015260408201528033930390a2005b60405162461bcd60e51b815260206004820152600e60248201526d4241445f5055424c49435f4b455960901b6044820152606490fd5b60405162461bcd60e51b815260206004820152600b60248201526a5345414c5f45584953545360a81b6044820152606490fd5b346100e25760203660031901126100e2576001600160a01b03610d65610edc565b166000526003602052602060ff604060002054166040519015158152f35b346100e25760203660031901126100e2576001600160a01b03610da4610edc565b166000526002602052602060ff604060002054166040519015158152f35b346100e25760203660031901126100e2576004359067ffffffffffffffff82116100e25760206080916000610dfd60a0953690600401610eae565b949092610e0981610f05565b8281528285820152826040820152826060820152015282604051938492833781016004815203019020604051610e3e81610f05565b81549160ff83161515928383526020830160ff8260081c16151581526040840191600180881b039060101c1682526080600260018501549460608701958652015494019384526040519485525115156020850152600180861b039051166040840152516060830152516080820152f35b9181601f840112156100e25782359167ffffffffffffffff83116100e257602083818601950101116100e257565b600435906001600160a01b03821682036100e257565b9190602083019260088210156104355752565b60a0810190811067ffffffffffffffff82111761086d57604052565b90601f8019910116810190811067ffffffffffffffff82111761086d57604052565b15610f4a57565b60405162461bcd60e51b815260206004820152600b60248201526a1493d31157d1115392515160aa1b6044820152606490fd5b908060209392818452848401376000828201840152601f01601f1916010190565b15610fa557565b60405162461bcd60e51b815260206004820152600a60248201526915d493d391d7d4d1505360b21b6044820152606490fd5b90600182811c92168015611007575b6020831014610ff157565b634e487b7160e01b600052602260045260246000fd5b91607f1691610fe6565b6001600160a01b031660008181526001602052604090205460ff166008811015610435576001149081611042575090565b9050600052600260205260ff604060002054161590565b600160601b63ffffffff60c01b03198110801590611115575b61110e57600160601b63ffffffff60c01b031981600309600160601b63ffffffff60c01b0319908103919082116110f857600160601b63ffffffff60c01b0319917f5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b9183919082908181800909080890600160601b63ffffffff60c01b03199080091490565b634e487b7160e01b600052601160045260246000fd5b5050600090565b50600160601b63ffffffff60c01b031982101561107256fea2646970667358221220fd766d92db03151dd74f6c14ae12830c8fc28e0abf9833a43635239b0bb05fb964736f6c63430008250033",
+ "deployedBytecodeSize": 4451
+}

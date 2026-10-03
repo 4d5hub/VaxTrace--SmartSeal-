@@ -1,0 +1,8 @@
+{
+  "name": "smartseal-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SmartSeal Solidity contracts. Compiled with solc-js (Hardhat is intentionally not used).",
+  "scripts": { "compile": "node scripts/compile.js" },
+  "dependencies": { "solc": "0.8.37" }
+}
